@@ -5,14 +5,20 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import Studio from "./pages/Studio";
+import ProjectView from "./pages/ProjectView";
+import Characters from "./pages/Characters";
+import SharedVideo from "./pages/SharedVideo";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      <Route path="/" component={Home} />
+      <Route path="/studio" component={Studio} />
+      <Route path="/project/:id" component={ProjectView} />
+      <Route path="/characters" component={Characters} />
+      <Route path="/share/:token" component={SharedVideo} />
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -26,12 +32,19 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster />
+          <Toaster
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: "oklch(0.12 0.02 240)",
+                border: "1px solid oklch(0.22 0.03 230)",
+                color: "oklch(0.92 0.02 210)",
+              },
+            }}
+          />
+          <div className="scan-line" />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

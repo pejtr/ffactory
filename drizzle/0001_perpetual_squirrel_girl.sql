@@ -1,0 +1,80 @@
+CREATE TABLE `audio_tracks` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`projectId` int NOT NULL,
+	`trackType` enum('bgm','voiceover','sfx','dialogue') NOT NULL,
+	`title` varchar(255),
+	`prompt` text,
+	`audioUrl` text,
+	`duration` float,
+	`characterId` int,
+	`status` enum('pending','generating','completed','failed') NOT NULL DEFAULT 'pending',
+	`taskId` varchar(128),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `audio_tracks_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `characters` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`projectId` int,
+	`name` varchar(128) NOT NULL,
+	`description` text,
+	`personality` text,
+	`referenceImageUrl` text,
+	`soulIdImageUrl` text,
+	`voiceId` varchar(128),
+	`voiceName` varchar(128),
+	`defaultEmotion` varchar(64) DEFAULT 'neutral',
+	`metadata` json,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `characters_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `scenes` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`projectId` int NOT NULL,
+	`sceneIndex` int NOT NULL,
+	`title` varchar(255),
+	`description` text NOT NULL,
+	`dialogue` text,
+	`visualPrompt` text,
+	`emotion` varchar(64) DEFAULT 'neutral',
+	`sceneType` enum('dialogue','broll','action','lipsync','dream','transition') NOT NULL DEFAULT 'broll',
+	`videoModel` varchar(64),
+	`characterIds` json,
+	`duration` int DEFAULT 5,
+	`status` enum('pending','generating','completed','failed') NOT NULL DEFAULT 'pending',
+	`videoUrl` text,
+	`audioUrl` text,
+	`thumbnailUrl` text,
+	`klingTaskId` varchar(128),
+	`falTaskId` varchar(128),
+	`errorMessage` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `scenes_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `video_projects` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`userId` int NOT NULL,
+	`title` varchar(255) NOT NULL,
+	`idea` text NOT NULL,
+	`genre` varchar(64),
+	`emotionalTone` varchar(64),
+	`dreamMode` boolean DEFAULT false,
+	`targetDuration` int DEFAULT 60,
+	`status` enum('draft','generating_screenplay','generating_scenes','generating_audio','assembling','completed','failed') NOT NULL DEFAULT 'draft',
+	`screenplay` json,
+	`shareToken` varchar(64),
+	`finalVideoUrl` text,
+	`thumbnailUrl` text,
+	`estimatedCostUsd` float,
+	`actualCostUsd` float,
+	`errorMessage` text,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `video_projects_id` PRIMARY KEY(`id`),
+	CONSTRAINT `video_projects_shareToken_unique` UNIQUE(`shareToken`)
+);
