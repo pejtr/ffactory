@@ -147,6 +147,7 @@ export default function Studio() {
 
   const previewMutation = trpc.video.preview.useMutation();
   const createMutation = trpc.video.create.useMutation();
+  const { data: modelStatus } = trpc.models.status.useQuery();
 
   const steps = ["Nápad", "Styl", "Scénář", "Vytvořit"];
 
@@ -528,17 +529,46 @@ export default function Studio() {
 
             <div className="grid grid-cols-2 gap-2 text-left">
               {[
-                { icon: <Mic className="w-4 h-4" />, label: "Dialogy", model: "Kling 3.0 Omni", color: "text-blue-400" },
-                { icon: <Film className="w-4 h-4" />, label: "B-Roll", model: "Hailuo MiniMax 2.3", color: "text-purple-400" },
-                { icon: <Music className="w-4 h-4" />, label: "Hudba", model: "Kie.ai Music", color: "text-green-400" },
-                { icon: <Star className="w-4 h-4" />, label: "Hlasy", model: "ElevenLabs TTS", color: "text-orange-400" },
+                {
+                  icon: <Mic className="w-4 h-4" />,
+                  label: "Dialogy",
+                  model: "Kling 3.0 Omni",
+                  color: "text-blue-400",
+                  available: modelStatus?.kling !== false,
+                },
+                {
+                  icon: <Film className="w-4 h-4" />,
+                  label: "B-Roll",
+                  model: modelStatus?.hailuo ? "Hailuo MiniMax 2.3" : "Kling 3.0 (záloha)",
+                  color: modelStatus?.hailuo ? "text-purple-400" : "text-blue-400",
+                  available: true,
+                  note: modelStatus?.hailuo ? null : "FAL klíč chybí",
+                },
+                {
+                  icon: <Music className="w-4 h-4" />,
+                  label: "Hudba",
+                  model: "Kie.ai Music",
+                  color: "text-green-400",
+                  available: modelStatus?.kie !== false,
+                },
+                {
+                  icon: <Star className="w-4 h-4" />,
+                  label: "Hlasy",
+                  model: "ElevenLabs TTS",
+                  color: "text-orange-400",
+                  available: modelStatus?.elevenlabs !== false,
+                },
               ].map((item) => (
                 <div key={item.label} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/30 border border-slate-700/40">
                   <span className={item.color}>{item.icon}</span>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <div className="text-xs text-slate-400">{item.label}</div>
-                    <div className={`text-xs font-medium ${item.color}`}>{item.model}</div>
+                    <div className={`text-xs font-medium ${item.color} truncate`}>{item.model}</div>
+                    {item.note && (
+                      <div className="text-xs text-yellow-500/80">{item.note}</div>
+                    )}
                   </div>
+                  <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.available ? "bg-green-400" : "bg-yellow-400"}`} />
                 </div>
               ))}
             </div>

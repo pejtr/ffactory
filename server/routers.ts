@@ -17,6 +17,7 @@ import { runVideoPipeline } from "./pipeline";
 import { elevenLabsListVoices } from "./audio";
 import { generateImage } from "./_core/imageGeneration";
 import { invokeLLM } from "./_core/llm";
+import { isFalAvailable, validateFalApiKey } from "./falai";
 
 export const appRouter = router({
   system: systemRouter,
@@ -26,6 +27,24 @@ export const appRouter = router({
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
+    }),
+  }),
+
+  models: router({
+    // Returns which AI models are currently available (based on configured API keys)
+    status: publicProcedure.query(async () => {
+      return {
+        kling: true,                    // Always available (keys pre-configured)
+        hailuo: isFalAvailable(),       // Requires FAL_API_KEY
+        wan22: isFalAvailable(),        // Requires FAL_API_KEY
+        elevenlabs: Boolean(process.env.ELEVENLABS_API_KEY),
+        kie: Boolean(process.env.KIE_API_KEY),
+      };
+    }),
+
+    // Validate FAL API key (admin use)
+    validateFal: protectedProcedure.mutation(async () => {
+      return validateFalApiKey();
     }),
   }),
 

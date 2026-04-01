@@ -1,14 +1,13 @@
 import { getDb } from "./db";
-import { videoProjects, scenes, audioTracks, characters } from "../drizzle/schema";
+import { videoProjects, scenes, audioTracks } from "../drizzle/schema";
 import { eq, asc } from "drizzle-orm";
 import { generateScreenplay, calculateTotalCost, type Screenplay } from "./screenplay";
 import { klingTextToVideo, klingPollTask, KLING_CAMERA_PRESETS } from "./kling";
-import { hailiuoTextToVideo, wan22TextToVideo } from "./falai";
+import { hailiuoTextToVideo, wan22TextToVideo, isFalAvailable } from "./falai";
 import { elevenLabsTTS, kieMusicGenerate, kieMusicPoll } from "./audio";
-import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
 
-// ─── Update project status helper ─────────────────────────────────────────────
+// ─── Status helpers ────────────────────────────────────────────────────────────
 async function updateProjectStatus(
   projectId: number,
   status: typeof videoProjects.$inferSelect["status"],
@@ -33,6 +32,19 @@ async function updateSceneStatus(
     .where(eq(scenes.id, sceneId));
 }
 
+// ─── Model fallback logic ─────────────────────────────────────────────────────
+// If FAL_API_KEY is not set, fall back to Kling 3.0 for all scenes
+function resolveModel(requestedModel: string | null): string {
+  const model = requestedModel ?? "hailuo-minimax-2.3";
+  const falModels = ["hailuo-minimax-2.3", "wan-2.2-t2v", "wan-2.2-s2v"];
+
+  if (falModels.includes(model) && !isFalAvailable()) {
+    console.warn(`[Pipeline] FAL_API_KEY not set — falling back from ${model} to kling-v3-omni`);
+    return "kling-v3-omni";
+  }
+  return model;
+}
+
 // ─── Main Pipeline ─────────────────────────────────────────────────────────────
 export async function runVideoPipeline(projectId: number): Promise<void> {
   const db = await getDb();
@@ -40,6 +52,9 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
 
   const [project] = await db.select().from(videoProjects).where(eq(videoProjects.id, projectId));
   if (!project) throw new Error(`Project ${projectId} not found`);
+
+  const falEnabled = isFalAvailable();
+  console.log(`[Pipeline] Starting project ${projectId}. FAL available: ${falEnabled}`);
 
   try {
     // ── Step 1: Generate Screenplay ──────────────────────────────────────────
@@ -67,6 +82,8 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
 
     // ── Step 2: Save Scenes to DB ────────────────────────────────────────────
     for (const scene of screenplay.scenes) {
+      // Apply fallback model if FAL is not available
+      const resolvedModel = resolveModel(scene.videoModel);
       await db.insert(scenes).values({
         projectId,
         sceneIndex: scene.index,
@@ -76,7 +93,7 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
         visualPrompt: scene.visualPrompt,
         emotion: scene.emotion,
         sceneType: scene.sceneType as typeof scenes.$inferSelect["sceneType"],
-        videoModel: scene.videoModel,
+        videoModel: resolvedModel,
         characterIds: scene.characters as unknown as Record<string, unknown>,
         duration: scene.duration,
         status: "pending",
@@ -111,7 +128,7 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
           .where(eq(audioTracks.id, audioTrack.id));
       }
     } catch (e) {
-      console.error("[Pipeline] BGM generation failed:", e);
+      console.error("[Pipeline] BGM generation failed (non-fatal):", e);
     }
 
     // ── Step 4: Generate Scene Videos ────────────────────────────────────────
@@ -124,9 +141,12 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
       await updateSceneStatus(scene.id, "generating");
       try {
         let videoUrl: string | null = null;
-        const model = scene.videoModel ?? "hailuo-minimax-2.3";
+        const model = scene.videoModel ?? "kling-v3-omni";
+
+        console.log(`[Pipeline] Scene ${scene.id} (${scene.title}): model=${model}`);
 
         if (model === "kling-v3-omni" || model === "kling-v3-motion") {
+          // ── Kling 3.0 — Primary model for dialogue & action ──────────────
           const cameraPreset = model === "kling-v3-motion"
             ? KLING_CAMERA_PRESETS.dollyIn
             : KLING_CAMERA_PRESETS.static;
@@ -145,17 +165,19 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
             videoUrl = await klingPollTask(taskId, "t2v");
           }
         } else if (model === "hailuo-minimax-2.3") {
+          // ── Hailuo MiniMax 2.3 — Cinematic B-roll (via fal.ai) ───────────
           videoUrl = await hailiuoTextToVideo({
             prompt: scene.visualPrompt ?? scene.description,
           });
         } else if (model === "wan-2.2-t2v" || model === "wan-2.2-s2v") {
+          // ── WAN 2.2 — Dream sequences & lip-sync (via fal.ai) ────────────
           videoUrl = await wan22TextToVideo({
             prompt: scene.visualPrompt ?? scene.description,
             resolution: "720p",
           });
         }
 
-        // Generate voiceover for dialogue scenes
+        // ── Generate voiceover for dialogue scenes ────────────────────────
         let audioUrl: string | null = null;
         if (scene.dialogue && scene.dialogue.trim()) {
           try {
@@ -171,17 +193,15 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
               status: "completed",
             });
           } catch (e) {
-            console.error(`[Pipeline] Voiceover failed for scene ${scene.id}:`, e);
+            console.error(`[Pipeline] Voiceover failed for scene ${scene.id} (non-fatal):`, e);
           }
         }
 
-        await updateSceneStatus(scene.id, "completed", {
-          videoUrl,
-          audioUrl,
-        });
+        await updateSceneStatus(scene.id, "completed", { videoUrl, audioUrl });
+        console.log(`[Pipeline] Scene ${scene.id} completed. videoUrl=${videoUrl ? "✓" : "null"}`);
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        console.error(`[Pipeline] Scene ${scene.id} failed:`, msg);
+        console.error(`[Pipeline] Scene ${scene.id} FAILED:`, msg);
         await updateSceneStatus(scene.id, "failed", { errorMessage: msg });
       }
     }
@@ -189,8 +209,6 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
     // ── Step 5: Assemble Final Video ─────────────────────────────────────────
     await updateProjectStatus(projectId, "assembling");
 
-    // For now, use the first completed scene video as the "final" video
-    // (Full FFmpeg assembly would be a separate service)
     const completedScenes = await db.select().from(scenes)
       .where(eq(scenes.projectId, projectId))
       .orderBy(asc(scenes.sceneIndex));
@@ -203,9 +221,11 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
       shareToken,
       actualCostUsd: estimatedCost,
     });
+
+    console.log(`[Pipeline] Project ${projectId} completed. shareToken=${shareToken}`);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    console.error(`[Pipeline] Project ${projectId} failed:`, msg);
+    console.error(`[Pipeline] Project ${projectId} FAILED:`, msg);
     await updateProjectStatus(projectId, "failed", { errorMessage: msg });
   }
 }

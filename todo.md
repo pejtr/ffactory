@@ -5,7 +5,6 @@
 - [x] Add KIE_API_KEY secret (Music + unified)
 - [x] Add ELEVENLABS_API_KEY secret
 - [x] Add FAL_API_KEY secret (WAN 2.2, Hailuo, Pika via fal.ai)
-- [x] Add GEMINI_API_KEY secret
 - [x] Create DB schema: video_projects, scenes, characters, audio_tracks tables
 - [x] Run DB migration
 
@@ -20,9 +19,6 @@
 - [x] Implement ElevenLabs TTS + SFX + voice list API
 - [x] Implement video pipeline orchestrator (scenes + audio parallel)
 - [x] Implement project status/progress tracking (polling)
-- [x] Switch screenplay engine to direct Gemini REST API (fix usage exhausted error)
-- [x] Optimize token usage: gemini-2.5-flash, short prompts
-- [x] Update model routing: Kling 3.0 primary (90% scenes), Hailuo only for transitions
 
 ## Phase 3: Frontend — Hollywood Studio UI
 - [x] Dark cinematic theme (Stargate Atlantis / Hollywood inspired)
@@ -33,43 +29,88 @@
 - [x] Characters page (Soul Cinema system)
 - [x] Shareable video page (public link)
 - [x] Cost estimator (show price before generating)
-- [x] Moje Projekty page (project gallery with status, thumbnails, share)
-
-## Soul Cinema System
-- [x] Character profile manager (name, description, personality, voice)
-- [x] Soul ID generation via AI image generation
-- [x] Character voice assignment (ElevenLabs voice per character)
-- [x] DB schema: referenceImages JSON array (up to 5 photos) + isMultiView flag
-- [x] Backend: S3 upload endpoint for reference photos
-- [x] Frontend: drag&drop photo upload with gallery and delete
-- [x] Character sheet support (1 photo with 4 angles = best consistency)
-- [x] Tip in UI: recommend character sheet for best results
-- [ ] Character consistency across scenes (reference image injection into prompts)
-- [ ] Multi-character scenes (multiple characters in same frame)
 
 ## Phase 0: Test Project — Stargate: Legacy (SG-1 + Atlantis + Universe tech)
 - [ ] Design pilot episode: SG-1 & Atlantis characters discover Destiny-class long-range travel tech
-- [ ] Create characters: O'Neill, Carter, Sheppard, McKay with Soul IDs
-- [ ] Generate pilot episode scenes
-- [ ] Assemble and share pilot episode link
+- [ ] Story: O'Neill, Carter, Sheppard, McKay + new crew activate ancient long-range gate bridge
+- [ ] Scene 1: SGC briefing room — dialogue (Kling 3.0 Omni native audio)
+- [ ] Scene 2: Stargate activation + wormhole travel — cinematic B-roll (Hailuo MiniMax 2.3)
+- [ ] Scene 3: Atlantis gate room — dialogue + emotion (Kling 3.0 Omni)
+- [ ] Scene 4: Deep space — Destiny-class ship exterior (Hailuo MiniMax 2.3 B-roll)
+- [ ] Scene 5: Alien encounter — action + motion control (Kling Motion Control)
+- [ ] Scene 6: Emotional resolution — WAN 2.2 S2V lip sync
+- [ ] BGM: Epic orchestral Hans Zimmer / Joel Goldsmith style (Kie.ai Music)
+- [ ] Assemble pilot episode and generate shareable link
 
-## AI Chatbot Lucie
-- [x] Backend: tRPC chatbot endpoint (Gemini-powered, Czech context)
-- [x] Frontend: floating chatbot panel (bottom right, always accessible)
-- [x] Streaming responses
-- [x] Context-aware tips per page
-
-## Překlad do češtiny
-- [x] Characters.tsx — česky
-- [x] Projects.tsx — česky
-- [x] Home.tsx — česky
-- [x] Studio.tsx — česky
-- [x] ProjectView.tsx — česky
-- [x] SharedVideo.tsx — česky
+## Soul Cinema System (Higgsfield Soul alternative)
+- [x] Character profile manager (name, description, personality, voice)
+- [x] Soul ID generation via AI image generation (consistent character portrait)
+- [x] Character voice assignment (ElevenLabs voice per character)
+- [ ] Character consistency across scenes (reference image injection)
+- [ ] Multi-character scenes (Sheppard + McKay + Carter in same frame)
+- [ ] Emotion layer per character per scene
+- [ ] Character memory (remembers appearance across entire episode)
 
 ## Phase 4: Tests & Polish
 - [x] Vitest tests for all backend procedures (14/14 passing)
-- [x] AI chatbot Lucie floating panel
 - [ ] Mobile responsive design polish
+- [ ] Projects gallery / history dashboard
 - [ ] Scene editor (manual override of model per scene)
 - [ ] Checkpoint and deploy
+
+## Soul Cinema — Referenční fotky
+- [ ] Backend: S3 upload endpoint pro referenční fotky charakterů
+- [ ] Backend: updateCharacterReferenceImage DB helper
+- [ ] Frontend: drag&drop foto upload v Characters stránce
+- [ ] Frontend: náhled nahraté fotky + možnost změnit
+- [ ] Soul ID generátor používá referenční fotku jako základ
+
+## Překlad do češtiny
+- [ ] Home.tsx — česky
+- [ ] Studio.tsx — česky
+- [ ] ProjectView.tsx — česky
+- [ ] Characters.tsx — česky
+- [ ] SharedVideo.tsx — česky
+- [ ] NotFound.tsx — česky
+
+## AI Chatbot průvodce (Lucie)
+- [ ] Backend: tRPC chatbot endpoint se streamingem (Gemini)
+- [ ] Chatbot zná kontext aplikace (jak funguje pipeline, co jsou modely, Soul Cinema)
+- [ ] Plovoucí chatbot panel (pravý dolní roh) — vždy dostupný
+- [ ] Kontextové nápovědy dle aktuální stránky
+- [ ] Krok-za-krokem průvodce: idea → screenplay → video → sdílení
+- [ ] Navrhuje příkazy a tipy pro Stargate: Legacy pilot
+
+## Intuitivní redesign (v2.0)
+- [ ] Studio wizard: krok-za-krokem (Krok 1: Nápad → Krok 2: Styl → Krok 3: Scénář → Krok 4: Vytvořit)
+- [ ] Vizuální progress indikátor kroků nahoře
+- [ ] Inline nápovědy a placeholder texty v češtině
+- [ ] Celé UI přeloženo do češtiny
+- [ ] AI chatbot Lucie — plovoucí panel vpravo dole, streaming odpovědi
+- [ ] Lucie zná celý kontext aplikace a navádí krok za krokem
+- [ ] Soul Cinema: drag&drop foto upload s náhledem
+
+## Soul Cinema — Multi-foto (v2.0)
+- [ ] DB schema: referenceImages jako JSON array (až 5 fotek) + isMultiView flag
+- [ ] Backend: upload endpoint pro více fotek najednou (S3) + detekce multi-view sheetu
+- [ ] Frontend: multi-foto upload UI (přední pohled, boční, detail obličeje, různé výrazy, volitelná 5.)
+- [ ] Podpora "character sheet" — jedna fotka se 4 záběry z různých úhlů (nejlepší konzistence)
+- [ ] Automatické označení multi-view sheetu při uploadu
+- [ ] Foto galerie s možností mazání jednotlivých fotek
+- [ ] Soul ID generátor kombinuje všechny referenční fotky / character sheet pro maximální konzistenci
+- [ ] Tip v UI: doporučení nahrát character sheet pro nejlepší výsledky
+
+## FAL_API_KEY Integrace (v2.1)
+- [x] FAL_API_KEY secret nastaven a ověřen
+- [x] falai.ts: robustní error handling, isFalAvailable(), validateFalApiKey()
+- [x] falai.ts: správné model ID pro Hailuo MiniMax (fal-ai/minimax/video-01-live/text-to-video)
+- [x] falai.ts: správné model ID pro WAN 2.2 T2V (fal-ai/wan/v2.2/t2v) a I2V (fal-ai/wan/v2.2/i2v)
+- [x] falai.ts: exponenciální backoff při pollingu (5s → 15s), timeout 10 minut
+- [x] pipeline.ts: graceful fallback na Kling 3.0 když FAL není dostupný
+- [x] pipeline.ts: detailní logging každé scény (model, výsledek)
+- [x] routers.ts: models.status endpoint (Kling/Hailuo/WAN/ElevenLabs/Kie dostupnost)
+- [x] routers.ts: models.validateFal endpoint pro ověření klíče
+- [x] Studio.tsx: dynamický model status indikátor v kroku 3 (zelená/žlutá tečka)
+- [x] ProjectView.tsx: oprava polling (všechny pipeline statusy: generating_screenplay, generating_audio, generating_scenes, assembling)
+- [x] ProjectView.tsx: česká lokalizace všech textů
+- [x] falai.test.ts: 16 testů pro fal.ai integraci (30/30 celkem passing)
