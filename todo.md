@@ -5,6 +5,7 @@
 - [x] Add KIE_API_KEY secret (Music + unified)
 - [x] Add ELEVENLABS_API_KEY secret
 - [x] Add FAL_API_KEY secret (WAN 2.2, Hailuo, Pika via fal.ai)
+- [x] Add GEMINI_API_KEY secret
 - [x] Create DB schema: video_projects, scenes, characters, audio_tracks tables
 - [x] Run DB migration
 
@@ -19,6 +20,9 @@
 - [x] Implement ElevenLabs TTS + SFX + voice list API
 - [x] Implement video pipeline orchestrator (scenes + audio parallel)
 - [x] Implement project status/progress tracking (polling)
+- [x] Switch screenplay engine to direct Gemini REST API (fix usage exhausted error)
+- [x] Optimize token usage: gemini-2.5-flash, short prompts
+- [x] Update model routing: Kling 3.0 primary (90% scenes), Hailuo only for transitions
 
 ## Phase 3: Frontend — Hollywood Studio UI
 - [x] Dark cinematic theme (Stargate Atlantis / Hollywood inspired)
@@ -29,31 +33,43 @@
 - [x] Characters page (Soul Cinema system)
 - [x] Shareable video page (public link)
 - [x] Cost estimator (show price before generating)
+- [x] Moje Projekty page (project gallery with status, thumbnails, share)
+
+## Soul Cinema System
+- [x] Character profile manager (name, description, personality, voice)
+- [x] Soul ID generation via AI image generation
+- [x] Character voice assignment (ElevenLabs voice per character)
+- [x] DB schema: referenceImages JSON array (up to 5 photos) + isMultiView flag
+- [x] Backend: S3 upload endpoint for reference photos
+- [x] Frontend: drag&drop photo upload with gallery and delete
+- [x] Character sheet support (1 photo with 4 angles = best consistency)
+- [x] Tip in UI: recommend character sheet for best results
+- [ ] Character consistency across scenes (reference image injection into prompts)
+- [ ] Multi-character scenes (multiple characters in same frame)
 
 ## Phase 0: Test Project — Stargate: Legacy (SG-1 + Atlantis + Universe tech)
 - [ ] Design pilot episode: SG-1 & Atlantis characters discover Destiny-class long-range travel tech
-- [ ] Story: O'Neill, Carter, Sheppard, McKay + new crew activate ancient long-range gate bridge
-- [ ] Scene 1: SGC briefing room — dialogue (Kling 3.0 Omni native audio)
-- [ ] Scene 2: Stargate activation + wormhole travel — cinematic B-roll (Hailuo MiniMax 2.3)
-- [ ] Scene 3: Atlantis gate room — dialogue + emotion (Kling 3.0 Omni)
-- [ ] Scene 4: Deep space — Destiny-class ship exterior (Hailuo MiniMax 2.3 B-roll)
-- [ ] Scene 5: Alien encounter — action + motion control (Kling Motion Control)
-- [ ] Scene 6: Emotional resolution — WAN 2.2 S2V lip sync
-- [ ] BGM: Epic orchestral Hans Zimmer / Joel Goldsmith style (Kie.ai Music)
-- [ ] Assemble pilot episode and generate shareable link
+- [ ] Create characters: O'Neill, Carter, Sheppard, McKay with Soul IDs
+- [ ] Generate pilot episode scenes
+- [ ] Assemble and share pilot episode link
 
-## Soul Cinema System (Higgsfield Soul alternative)
-- [x] Character profile manager (name, description, personality, voice)
-- [x] Soul ID generation via AI image generation (consistent character portrait)
-- [x] Character voice assignment (ElevenLabs voice per character)
-- [ ] Character consistency across scenes (reference image injection)
-- [ ] Multi-character scenes (Sheppard + McKay + Carter in same frame)
-- [ ] Emotion layer per character per scene
-- [ ] Character memory (remembers appearance across entire episode)
+## AI Chatbot Lucie
+- [x] Backend: tRPC chatbot endpoint (Gemini-powered, Czech context)
+- [x] Frontend: floating chatbot panel (bottom right, always accessible)
+- [x] Streaming responses
+- [x] Context-aware tips per page
+
+## Překlad do češtiny
+- [x] Characters.tsx — česky
+- [x] Projects.tsx — česky
+- [x] Home.tsx — česky
+- [x] Studio.tsx — česky
+- [x] ProjectView.tsx — česky
+- [x] SharedVideo.tsx — česky
 
 ## Phase 4: Tests & Polish
 - [x] Vitest tests for all backend procedures (14/14 passing)
+- [x] AI chatbot Lucie floating panel
 - [ ] Mobile responsive design polish
-- [ ] Projects gallery / history dashboard
 - [ ] Scene editor (manual override of model per scene)
 - [ ] Checkpoint and deploy

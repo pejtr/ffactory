@@ -127,6 +127,35 @@ export async function updateCharacterSoulId(id: number, soulIdImageUrl: string) 
   await db.update(characters).set({ soulIdImageUrl }).where(eq(characters.id, id));
 }
 
+export type ReferenceImage = {
+  url: string;
+  label: string;  // e.g. "Přední pohled", "Boční pohled", "Character sheet"
+  isMultiView: boolean; // true = one image with multiple angles
+};
+
+export async function updateCharacterReferenceImages(id: number, images: ReferenceImage[]) {
+  const db = await getDb();
+  if (!db) return;
+  // Also set primary referenceImageUrl to first image for backwards compat
+  const primary = images[0]?.url ?? null;
+  await db.update(characters).set({
+    referenceImages: images as unknown as null,
+    referenceImageUrl: primary,
+  }).where(eq(characters.id, id));
+}
+
+export async function addCharacterReferenceImage(id: number, image: ReferenceImage, existing: ReferenceImage[]) {
+  const updated = [...existing, image].slice(0, 5); // max 5
+  await updateCharacterReferenceImages(id, updated);
+  return updated;
+}
+
+export async function removeCharacterReferenceImage(id: number, imageUrl: string, existing: ReferenceImage[]) {
+  const updated = existing.filter(img => img.url !== imageUrl);
+  await updateCharacterReferenceImages(id, updated);
+  return updated;
+}
+
 export async function deleteCharacter(id: number): Promise<void> {
   const db = await getDb();
   if (!db) return;

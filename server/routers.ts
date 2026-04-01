@@ -7,11 +7,16 @@ import {
   createVideoProject, getVideoProject, getUserProjects, getProjectScenes,
   getProjectAudioTracks, getVideoProjectByToken,
   getUserCharacters, createCharacter, getCharacter, updateCharacterSoulId, deleteCharacter,
+  updateCharacterReferenceImages, addCharacterReferenceImage, removeCharacterReferenceImage,
+  type ReferenceImage,
 } from "./db";
+import { storagePut } from "./storage";
+import { nanoid } from "nanoid";
 import { generateScreenplay, calculateTotalCost } from "./screenplay";
 import { runVideoPipeline } from "./pipeline";
 import { elevenLabsListVoices } from "./audio";
 import { generateImage } from "./_core/imageGeneration";
+import { invokeLLM } from "./_core/llm";
 
 export const appRouter = router({
   system: systemRouter,
@@ -173,6 +178,50 @@ export const appRouter = router({
       }),
   }),
 
+  upload: router({
+    // Upload a single reference image for a character (base64 encoded)
+    characterPhoto: protectedProcedure
+      .input(z.object({
+        characterId: z.number(),
+        base64: z.string(),          // data:image/jpeg;base64,...
+        mimeType: z.string().default("image/jpeg"),
+        label: z.string().default("Referenční fotka"),
+        isMultiView: z.boolean().default(false),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const character = await getCharacter(input.characterId);
+        if (!character || character.userId !== ctx.user.id) throw new Error("Character not found");
+
+        // Decode base64 and upload to S3
+        const base64Data = input.base64.replace(/^data:[^;]+;base64,/, "");
+        const buffer = Buffer.from(base64Data, "base64");
+        const ext = input.mimeType === "image/png" ? "png" : "jpg";
+        const key = `characters/${ctx.user.id}/${input.characterId}/ref-${nanoid(8)}.${ext}`;
+        const { url } = await storagePut(key, buffer, input.mimeType);
+
+        const existing = (character.referenceImages as ReferenceImage[] | null) ?? [];
+        const updated = await addCharacterReferenceImage(input.characterId, {
+          url,
+          label: input.label,
+          isMultiView: input.isMultiView,
+        }, existing);
+        return { url, images: updated };
+      }),
+
+    removeCharacterPhoto: protectedProcedure
+      .input(z.object({
+        characterId: z.number(),
+        imageUrl: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const character = await getCharacter(input.characterId);
+        if (!character || character.userId !== ctx.user.id) throw new Error("Character not found");
+        const existing = (character.referenceImages as ReferenceImage[] | null) ?? [];
+        const updated = await removeCharacterReferenceImage(input.characterId, input.imageUrl, existing);
+        return { images: updated };
+      }),
+  }),
+
   audio: router({
     listVoices: protectedProcedure.query(async () => {
       try {
@@ -181,6 +230,47 @@ export const appRouter = router({
       } catch { return []; }
     }),
   }),
+
+  chatbot: router({
+    ask: publicProcedure
+      .input(z.object({
+        message: z.string().min(1).max(1000),
+        context: z.string().optional(), // current page context
+        history: z.array(z.object({
+          role: z.enum(["user", "assistant"]),
+          content: z.string(),
+        })).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const systemPrompt = `Jsi Lucie, AI asistentka Video Factory — profesionálního Hollywood-grade nástroje pro tvorbu AI vidé z nápadu.
+
+Tvůj úkol: Dokonale navést uživatele krok za krokem. Jsi přátelská, odborná, konkrétní a inspirativní.
+
+Co umí Video Factory:
+1. STUDIO — Zadáš nápad na video (napr. "Pilot seriálu Stargate: Legacy"), vybereš žánr, emoční tón, délku. AI vygeneruje scénář a pak celé video.
+2. SOUL CINEMA — Vytvoříš konzistentní postavy (jméno, popis, osobnost, hlas). Nahráš až 5 referenčních fotek nebo jeden "character sheet" (4 záběry z různých úhlů na jedné fotce). Soul ID zajistí konzistenci obličeje ve všech scénách.
+3. MODELY: Kling 3.0 Omni (dialogy s nativním zvukem), Hailuo MiniMax 2.3 (kinematografický B-roll), WAN 2.2 Speech-to-Video (lip sync), Kling Motion Control (akce).
+4. AUDIO: ElevenLabs TTS (hlasy postav), Kie.ai Music (originelní hudba).
+5. SDILENÍ: Každé video dostane sdílelný odkaz.
+
+Aktuální stránka: ${input.context ?? "hlavní stránka"}
+
+Odpovídej vždy česky. Buď konkrétní, navrhuj přísné další kroky. Používej emoji umírneně pro přehlednost.`;
+
+        const messages = [
+          { role: "system" as const, content: systemPrompt },
+          ...(input.history ?? []).map(h => ({ role: h.role as "user" | "assistant", content: h.content })),
+          { role: "user" as const, content: input.message },
+        ];
+
+        const response = await invokeLLM({ messages });
+        const reply = response.choices?.[0]?.message?.content ?? "Omlouvám se, nemohu teď odpovědět.";
+        return { reply };
+      }),
+  }),
 });
+
+// ─── Chatbot (Lucie) ──────────────────────────────────────────────────────────
+// Note: streaming via standard tRPC mutation returning full text (SSE upgrade later)
 
 export type AppRouter = typeof appRouter;

@@ -66,7 +66,8 @@ export const characters = mysqlTable("characters", {
   name: varchar("name", { length: 128 }).notNull(),
   description: text("description"),
   personality: text("personality"),
-  referenceImageUrl: text("referenceImageUrl"),
+  referenceImageUrl: text("referenceImageUrl"),   // primary / legacy single image
+  referenceImages: json("referenceImages"),         // array of {url, label, isMultiView}
   soulIdImageUrl: text("soulIdImageUrl"),
   voiceId: varchar("voiceId", { length: 128 }),
   voiceName: varchar("voiceName", { length: 128 }),

@@ -9,6 +9,8 @@ import Studio from "./pages/Studio";
 import ProjectView from "./pages/ProjectView";
 import Characters from "./pages/Characters";
 import SharedVideo from "./pages/SharedVideo";
+import Projects from "./pages/Projects";
+import LucieChatbot from "./components/LucieChatbot";
 
 function Router() {
   return (
@@ -17,6 +19,7 @@ function Router() {
       <Route path="/studio" component={Studio} />
       <Route path="/project/:id" component={ProjectView} />
       <Route path="/characters" component={Characters} />
+      <Route path="/projects" component={Projects} />
       <Route path="/share/:token" component={SharedVideo} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
@@ -46,6 +49,7 @@ function App() {
           />
           <div className="scan-line" />
           <Router />
+          <LucieChatbot />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
