@@ -2,7 +2,8 @@ import { eq, desc, asc, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users, videoProjects, scenes, characters, audioTracks,
-  credits, creditTransactions,
+  credits, creditTransactions, generations,
+  type InsertGeneration, type Generation,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -201,6 +202,13 @@ export const CREDIT_COSTS = {
   video_generation: 20,      // Celé video (odečte se při spuštění)
   scene_generation: 3,       // Každá scéna zvlášť (odečte se po dokončení)
   soul_id_generation: 5,     // Generování Soul ID portrétu
+  // Generate Hub
+  nano_banana_t2i: 2,        // Nano Banana 2 T2I (1 obrázek)
+  nano_banana_edit: 3,       // Nano Banana 2 Edit
+  seedream_edit: 4,          // Seedream 5 Lite Edit
+  kling_motion_control: 8,   // Kling Motion Control (přenos pohybu)
+  kling_video_edit: 10,      // Kling O1 Video Edit
+  kling_i2v: 5,              // Kling 3.0 Pro I2V
 } as const;
 
 export const SIGNUP_BONUS = 100; // Startovní kredity pro nového uživatele
@@ -231,7 +239,7 @@ export async function getUserCredits(userId: number) {
   return getOrCreateCredits(userId);
 }
 
-export async function spendCredits(userId: number, amount: number, type: "video_generation" | "scene_generation" | "soul_id_generation", description: string, projectId?: number): Promise<{ success: boolean; balance: number; error?: string }> {
+export async function spendCredits(userId: number, amount: number, type: "video_generation" | "scene_generation" | "soul_id_generation" | "generate_hub", description: string, projectId?: number): Promise<{ success: boolean; balance: number; error?: string }> {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const userCredits = await getOrCreateCredits(userId);
@@ -249,7 +257,7 @@ export async function spendCredits(userId: number, amount: number, type: "video_
   return { success: true, balance: updated[0]?.balance ?? 0 };
 }
 
-export async function earnCredits(userId: number, amount: number, type: "admin_grant" | "daily_bonus", description: string) {
+export async function earnCredits(userId: number, amount: number, type: "admin_grant" | "daily_bonus" | "signup_bonus", description: string) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await getOrCreateCredits(userId); // ensure record exists
@@ -270,5 +278,35 @@ export async function getCreditTransactions(userId: number, limit = 20) {
   return db.select().from(creditTransactions)
     .where(eq(creditTransactions.userId, userId))
     .orderBy(desc(creditTransactions.createdAt))
+    .limit(limit);
+}
+
+// ─── Generate Hub Generations ─────────────────────────────────────────────────
+export async function createGeneration(data: Omit<InsertGeneration, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(generations).values(data).$returningId();
+  return result[0].id;
+}
+
+export async function updateGeneration(id: number, data: Partial<Pick<Generation, 'status' | 'resultUrl' | 'resultUrls' | 'falRequestId' | 'klingTaskId' | 'errorMessage' | 'metadata'>>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(generations).set(data).where(eq(generations.id, id));
+}
+
+export async function getGeneration(id: number): Promise<Generation | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(generations).where(eq(generations.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getUserGenerations(userId: number, limit = 20): Promise<Generation[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(generations)
+    .where(eq(generations.userId, userId))
+    .orderBy(desc(generations.createdAt))
     .limit(limit);
 }

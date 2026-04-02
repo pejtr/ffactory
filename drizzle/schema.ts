@@ -173,6 +173,7 @@ export const creditTransactions = mysqlTable("credit_transactions", {
     "soul_id_generation",
     "admin_grant",
     "daily_bonus",
+    "generate_hub",
   ]).notNull(),
   description: varchar("description", { length: 255 }),
   projectId: int("projectId"),
@@ -181,3 +182,40 @@ export const creditTransactions = mysqlTable("credit_transactions", {
 
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;
+
+// ─── Generate Hub Generations ──────────────────────────────────────────────────────────────────────────────────────
+export const generations = mysqlTable("generations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  model: mysqlEnum("model", [
+    "nano-banana-2",
+    "nano-banana-2-edit",
+    "nano-banana-pro",
+    "nano-banana-pro-edit",
+    "seedream-5-edit",
+    "kling-motion-control",
+    "kling-video-edit",
+    "kling-i2v",
+    "hailuo-t2v",
+    "hailuo-i2v",
+    "wan22-t2v",
+    "wan22-i2v",
+  ]).notNull(),
+  type: mysqlEnum("type", ["t2i", "i2i", "t2v", "i2v", "v2v"]).notNull(),
+  prompt: text("prompt").notNull(),
+  inputImageUrls: json("inputImageUrls"),   // string[]
+  inputVideoUrl: text("inputVideoUrl"),
+  resultUrl: text("resultUrl"),             // final image/video URL
+  resultUrls: json("resultUrls"),           // string[] for multi-image results
+  falRequestId: varchar("falRequestId", { length: 128 }),
+  klingTaskId: varchar("klingTaskId", { length: 128 }),
+  creditsCost: int("creditsCost").default(0).notNull(),
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed"]).default("pending").notNull(),
+  errorMessage: text("errorMessage"),
+  metadata: json("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Generation = typeof generations.$inferSelect;
+export type InsertGeneration = typeof generations.$inferInsert;

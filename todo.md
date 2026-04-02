@@ -134,3 +134,16 @@
 - [x] CreditsWidget.tsx: sdílená komponenta — žlutý badge v navigaci (Home + Studio)
 - [x] App.tsx: route /credits přidána
 - [x] credits.test.ts: 14 testů pro credits systém a Kling Motion (44/44 celkem passing)
+
+## Generate Hub v3.0 (Kling Motion Control + Kling Edit + Nano Banana 2 + Seedream 5)
+- [ ] Backend: falai.ts rozšíření — nanoBanana2Generate, nanoBanana2Edit, seedream5Edit, klingVideoEdit
+- [ ] Backend: kling.ts rozšíření — klingMotionControl (přenos pohybu z referenčního videa)
+- [ ] Backend: routers.ts — generate router s procedurama pro všechny modely
+- [ ] DB: generations tabulka (model, type, prompt, result_url, credits_cost, status)
+- [ ] Frontend: GenerateHub stránka s tab navigací (Obrázky / Videa / Editace)
+- [ ] Frontend: Nano Banana 2 karta (T2I + I2I edit)
+- [ ] Frontend: Seedream 5 karta (multi-image edit)
+- [ ] Frontend: Kling Motion Control karta (upload obrázku + referenční video)
+- [ ] Frontend: Kling Edit karta (video-to-video s @Element/@Image referencemi)
+- [ ] Navigace: přidat Generate Hub do Home.tsx a Studio.tsx
+- [ ] Testy pro nové generate procedury

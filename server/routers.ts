@@ -23,8 +23,15 @@ import { generateImage } from "./_core/imageGeneration";
 import { invokeLLM } from "./_core/llm";
 import { isFalAvailable, validateFalApiKey } from "./falai";
 import {
-  klingTextToVideo, klingImageToVideo, klingPollTask, KLING_CAMERA_PRESETS,
+  klingTextToVideo, klingImageToVideo, klingMotionControl, klingPollTask, KLING_CAMERA_PRESETS,
 } from "./kling";
+import {
+  nanoBanana2TextToImage, nanoBanana2EditImage,
+  seedream5Edit, klingVideoEdit, klingI2VFal,
+} from "./falai";
+import {
+  createGeneration, updateGeneration, getUserGenerations,
+} from "./db";
 
 export const appRouter = router({
   system: systemRouter,
@@ -377,7 +384,142 @@ export const appRouter = router({
     })),
   }),
 
-  // ─── Chatbot (Lucie) ────────────────────────────────────────────────────────
+  // ─── Generate Hub ────────────────────────────────────────────────────────────────────────────
+  generate: router({
+    history: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(100).default(20) }))
+      .query(async ({ ctx, input }) => getUserGenerations(ctx.user.id, input.limit)),
+
+    nanoBananaT2I: protectedProcedure
+      .input(z.object({
+        prompt: z.string().min(3).max(2000),
+        aspectRatio: z.enum(["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "21:9"]).default("1:1"),
+        resolution: z.enum(["0.5K", "1K", "2K", "4K"]).default("1K"),
+        numImages: z.number().min(1).max(4).default(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const cost = CREDIT_COSTS.nano_banana_t2i * input.numImages;
+        const userCredits = await getUserCredits(ctx.user.id);
+        if (userCredits.balance < cost) throw new Error(`Nedřív kreditů. Potřebuješ ${cost}, máš ${userCredits.balance}.`);
+        const genId = await createGeneration({ userId: ctx.user.id, model: "nano-banana-2", type: "t2i", prompt: input.prompt, creditsCost: cost, status: "processing" });
+        try {
+          const result = await nanoBanana2TextToImage({ prompt: input.prompt, aspectRatio: input.aspectRatio, resolution: input.resolution, numImages: input.numImages });
+          await updateGeneration(genId, { status: "completed", resultUrl: result.urls[0] ?? undefined, resultUrls: result.urls });
+          await spendCredits(ctx.user.id, cost, "generate_hub", `Nano Banana 2 T2I (${input.numImages}x)`);
+          return { generationId: genId, urls: result.urls, description: result.description };
+        } catch (e) { await updateGeneration(genId, { status: "failed", errorMessage: String(e) }); throw e; }
+      }),
+
+    nanoBananaEdit: protectedProcedure
+      .input(z.object({
+        prompt: z.string().min(3).max(2000),
+        imageUrl: z.string().url(),
+        aspectRatio: z.enum(["1:1", "16:9", "9:16", "4:3", "3:4"]).default("1:1"),
+        resolution: z.enum(["0.5K", "1K", "2K", "4K"]).default("1K"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const cost = CREDIT_COSTS.nano_banana_edit;
+        const userCredits = await getUserCredits(ctx.user.id);
+        if (userCredits.balance < cost) throw new Error(`Nedřív kreditů. Potřebuješ ${cost}, máš ${userCredits.balance}.`);
+        const genId = await createGeneration({ userId: ctx.user.id, model: "nano-banana-2-edit", type: "i2i", prompt: input.prompt, inputImageUrls: [input.imageUrl], creditsCost: cost, status: "processing" });
+        try {
+          const result = await nanoBanana2EditImage({ prompt: input.prompt, imageUrl: input.imageUrl, aspectRatio: input.aspectRatio, resolution: input.resolution });
+          await updateGeneration(genId, { status: "completed", resultUrl: result.urls[0] ?? undefined, resultUrls: result.urls });
+          await spendCredits(ctx.user.id, cost, "generate_hub", "Nano Banana 2 Edit");
+          return { generationId: genId, urls: result.urls, description: result.description };
+        } catch (e) { await updateGeneration(genId, { status: "failed", errorMessage: String(e) }); throw e; }
+      }),
+
+    seedream5Edit: protectedProcedure
+      .input(z.object({
+        prompt: z.string().min(3).max(2000),
+        imageUrls: z.array(z.string().url()).min(1).max(10),
+        imageSize: z.enum(["square_hd", "square", "portrait_4_3", "portrait_16_9", "landscape_4_3", "landscape_16_9", "auto_2K", "auto_3K"]).default("auto_2K"),
+        numImages: z.number().min(1).max(4).default(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const cost = CREDIT_COSTS.seedream_edit * input.numImages;
+        const userCredits = await getUserCredits(ctx.user.id);
+        if (userCredits.balance < cost) throw new Error(`Nedřív kreditů. Potřebuješ ${cost}, máš ${userCredits.balance}.`);
+        const genId = await createGeneration({ userId: ctx.user.id, model: "seedream-5-edit", type: "i2i", prompt: input.prompt, inputImageUrls: input.imageUrls, creditsCost: cost, status: "processing" });
+        try {
+          const result = await seedream5Edit({ prompt: input.prompt, imageUrls: input.imageUrls, imageSize: input.imageSize, numImages: input.numImages });
+          await updateGeneration(genId, { status: "completed", resultUrl: result.urls[0] ?? undefined, resultUrls: result.urls });
+          await spendCredits(ctx.user.id, cost, "generate_hub", `Seedream 5 Edit (${input.numImages}x)`);
+          return { generationId: genId, urls: result.urls, seed: result.seed };
+        } catch (e) { await updateGeneration(genId, { status: "failed", errorMessage: String(e) }); throw e; }
+      }),
+
+    klingMotionControl: protectedProcedure
+      .input(z.object({
+        imageUrl: z.string().url(),
+        motionVideoUrl: z.string().url(),
+        prompt: z.string().max(2000).optional(),
+        modelName: z.enum(["kling-v2-master", "kling-v1-6", "kling-v3"]).default("kling-v2-master"),
+        mode: z.enum(["std", "pro"]).default("std"),
+        duration: z.enum(["5", "10"]).default("5"),
+        aspectRatio: z.enum(["16:9", "9:16", "1:1"]).default("16:9"),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const cost = CREDIT_COSTS.kling_motion_control;
+        const userCredits = await getUserCredits(ctx.user.id);
+        if (userCredits.balance < cost) throw new Error(`Nedřív kreditů. Potřebuješ ${cost}, máš ${userCredits.balance}.`);
+        const genId = await createGeneration({ userId: ctx.user.id, model: "kling-motion-control", type: "i2v", prompt: input.prompt ?? "Motion control", inputImageUrls: [input.imageUrl], inputVideoUrl: input.motionVideoUrl, creditsCost: cost, status: "processing" });
+        try {
+          const taskResp = await klingMotionControl({ imageUrl: input.imageUrl, motionVideoUrl: input.motionVideoUrl, prompt: input.prompt, modelName: input.modelName, mode: input.mode, duration: input.duration, aspectRatio: input.aspectRatio }) as { data?: { task_id?: string } };
+          const taskId = taskResp?.data?.task_id;
+          if (!taskId) throw new Error("Kling Motion Control: no task_id returned");
+          await updateGeneration(genId, { klingTaskId: taskId });
+          const videoUrl = await klingPollTask(taskId, "i2v", 600_000);
+          await updateGeneration(genId, { status: "completed", resultUrl: videoUrl });
+          await spendCredits(ctx.user.id, cost, "generate_hub", "Kling Motion Control");
+          return { generationId: genId, videoUrl, taskId };
+        } catch (e) { await updateGeneration(genId, { status: "failed", errorMessage: String(e) }); throw e; }
+      }),
+
+    klingVideoEdit: protectedProcedure
+      .input(z.object({
+        prompt: z.string().min(5).max(2000),
+        videoUrl: z.string().url(),
+        imageUrls: z.array(z.string().url()).max(4).optional(),
+        keepAudio: z.boolean().default(true),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const cost = CREDIT_COSTS.kling_video_edit;
+        const userCredits = await getUserCredits(ctx.user.id);
+        if (userCredits.balance < cost) throw new Error(`Nedřív kreditů. Potřebuješ ${cost}, máš ${userCredits.balance}.`);
+        const genId = await createGeneration({ userId: ctx.user.id, model: "kling-video-edit", type: "v2v", prompt: input.prompt, inputVideoUrl: input.videoUrl, inputImageUrls: input.imageUrls, creditsCost: cost, status: "processing" });
+        try {
+          const videoUrl = await klingVideoEdit({ prompt: input.prompt, videoUrl: input.videoUrl, imageUrls: input.imageUrls, keepAudio: input.keepAudio });
+          await updateGeneration(genId, { status: "completed", resultUrl: videoUrl ?? undefined });
+          await spendCredits(ctx.user.id, cost, "generate_hub", "Kling Video Edit");
+          return { generationId: genId, videoUrl };
+        } catch (e) { await updateGeneration(genId, { status: "failed", errorMessage: String(e) }); throw e; }
+      }),
+
+    klingI2V: protectedProcedure
+      .input(z.object({
+        imageUrl: z.string().url(),
+        prompt: z.string().min(3).max(2000),
+        duration: z.enum(["5", "10"]).default("5"),
+        aspectRatio: z.enum(["16:9", "9:16", "1:1"]).default("16:9"),
+        cfgScale: z.number().min(0).max(1).default(0.5),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const cost = CREDIT_COSTS.kling_i2v;
+        const userCredits = await getUserCredits(ctx.user.id);
+        if (userCredits.balance < cost) throw new Error(`Nedřív kreditů. Potřebuješ ${cost}, máš ${userCredits.balance}.`);
+        const genId = await createGeneration({ userId: ctx.user.id, model: "kling-i2v", type: "i2v", prompt: input.prompt, inputImageUrls: [input.imageUrl], creditsCost: cost, status: "processing" });
+        try {
+          const videoUrl = await klingI2VFal({ imageUrl: input.imageUrl, prompt: input.prompt, duration: input.duration, aspectRatio: input.aspectRatio, cfgScale: input.cfgScale });
+          await updateGeneration(genId, { status: "completed", resultUrl: videoUrl ?? undefined });
+          await spendCredits(ctx.user.id, cost, "generate_hub", "Kling 3.0 Pro I2V");
+          return { generationId: genId, videoUrl };
+        } catch (e) { await updateGeneration(genId, { status: "failed", errorMessage: String(e) }); throw e; }
+      }),
+  }),
+
+  // ─── Chatbot (Lucie) ────────────────────────────────────────────────────────────────────────────
   chatbot: router({
     ask: publicProcedure
       .input(z.object({
