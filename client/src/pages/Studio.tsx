@@ -14,6 +14,7 @@ import {
   Clock, Music, Mic, Zap, Eye, Play, CheckCircle2,
   Clapperboard, Star, Loader2, Users, RefreshCw
 } from "lucide-react";
+import { CreditsWidget } from "@/components/CreditsWidget";
 
 type SceneData = {
   title: string;
@@ -214,12 +215,15 @@ export default function Studio() {
             <Clapperboard className="w-5 h-5 text-blue-400" />
             <span className="text-white font-semibold">Studio</span>
           </div>
-          <button
-            onClick={() => navigate("/characters")}
-            className="text-slate-400 hover:text-white text-sm flex items-center gap-1 transition-colors"
-          >
-            <Users className="w-4 h-4 mr-1" /> Postavy
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/characters")}
+              className="text-slate-400 hover:text-white text-sm flex items-center gap-1 transition-colors"
+            >
+              <Users className="w-4 h-4 mr-1" /> Postavy
+            </button>
+            <CreditsWidget />
+          </div>
         </div>
         <StepIndicator current={step} steps={steps} />
       </div>

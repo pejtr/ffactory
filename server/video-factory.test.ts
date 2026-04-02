@@ -24,9 +24,23 @@ vi.mock("./db", () => ({
     soulIdImageUrl: null, createdAt: new Date(), updatedAt: new Date(),
   }),
   updateCharacterSoulId: vi.fn().mockResolvedValue(undefined),
+  updateCharacter: vi.fn().mockResolvedValue(undefined),
   deleteCharacter: vi.fn().mockResolvedValue(undefined),
+  incrementCharacterUsage: vi.fn().mockResolvedValue(undefined),
   upsertUser: vi.fn().mockResolvedValue(undefined),
   getUserByOpenId: vi.fn().mockResolvedValue(null),
+  // Credits
+  getUserCredits: vi.fn().mockResolvedValue({ id: 1, userId: 1, balance: 100, totalEarned: 100, totalSpent: 0, updatedAt: new Date() }),
+  getOrCreateCredits: vi.fn().mockResolvedValue({ id: 1, userId: 1, balance: 100, totalEarned: 100, totalSpent: 0, updatedAt: new Date() }),
+  spendCredits: vi.fn().mockResolvedValue({ success: true, balance: 80 }),
+  earnCredits: vi.fn().mockResolvedValue({ id: 1, userId: 1, balance: 150, totalEarned: 150, totalSpent: 0, updatedAt: new Date() }),
+  getCreditTransactions: vi.fn().mockResolvedValue([]),
+  CREDIT_COSTS: { video_generation: 20, scene_generation: 3, soul_id_generation: 5 },
+  SIGNUP_BONUS: 100,
+  // Reference images
+  addCharacterReferenceImage: vi.fn().mockResolvedValue([]),
+  removeCharacterReferenceImage: vi.fn().mockResolvedValue([]),
+  updateCharacterReferenceImages: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./screenplay", () => ({

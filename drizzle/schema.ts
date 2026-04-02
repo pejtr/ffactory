@@ -72,6 +72,14 @@ export const characters = mysqlTable("characters", {
   voiceId: varchar("voiceId", { length: 128 }),
   voiceName: varchar("voiceName", { length: 128 }),
   defaultEmotion: varchar("defaultEmotion", { length: 64 }).default("neutral"),
+  // Kling Motion — uložené pohyby kamery pro tuto postavu
+  motionPreset: varchar("motionPreset", { length: 64 }).default("static"),
+  // Archivní tagy pro filtrování
+  tags: json("tags"),                               // string[]
+  // Počet použití v projektech
+  usageCount: int("usageCount").default(0).notNull(),
+  // Poslední projekt, ve kterém byla postava použita
+  lastUsedProjectId: int("lastUsedProjectId"),
   metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -139,3 +147,37 @@ export const audioTracks = mysqlTable("audio_tracks", {
 
 export type AudioTrack = typeof audioTracks.$inferSelect;
 export type InsertAudioTrack = typeof audioTracks.$inferInsert;
+
+// ─── Credits (kreditový systém) ────────────────────────────────────────────────
+export const credits = mysqlTable("credits", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  balance: int("balance").default(100).notNull(),   // aktuální zůstatek
+  totalEarned: int("totalEarned").default(100).notNull(),
+  totalSpent: int("totalSpent").default(0).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Credits = typeof credits.$inferSelect;
+export type InsertCredits = typeof credits.$inferInsert;
+
+// ─── Credit Transactions ───────────────────────────────────────────────────────
+export const creditTransactions = mysqlTable("credit_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  amount: int("amount").notNull(),                  // kladné = příjem, záporné = výdaj
+  type: mysqlEnum("type", [
+    "signup_bonus",
+    "video_generation",
+    "scene_generation",
+    "soul_id_generation",
+    "admin_grant",
+    "daily_bonus",
+  ]).notNull(),
+  description: varchar("description", { length: 255 }),
+  projectId: int("projectId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CreditTransaction = typeof creditTransactions.$inferSelect;
+export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;

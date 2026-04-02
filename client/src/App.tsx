@@ -9,6 +9,7 @@ import Studio from "./pages/Studio";
 import ProjectView from "./pages/ProjectView";
 import Characters from "./pages/Characters";
 import SharedVideo from "./pages/SharedVideo";
+import Credits from "./pages/Credits";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/project/:id" component={ProjectView} />
       <Route path="/characters" component={Characters} />
       <Route path="/share/:token" component={SharedVideo} />
+      <Route path="/credits" component={Credits} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

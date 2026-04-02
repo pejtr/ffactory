@@ -114,3 +114,23 @@
 - [x] ProjectView.tsx: oprava polling (všechny pipeline statusy: generating_screenplay, generating_audio, generating_scenes, assembling)
 - [x] ProjectView.tsx: česká lokalizace všech textů
 - [x] falai.test.ts: 16 testů pro fal.ai integraci (30/30 celkem passing)
+
+## Higgsfield Soul + Kling Motion + Credits (v2.2)
+- [x] DB schema: credits tabulka (balance, totalEarned, totalSpent, transactions)
+- [x] DB schema: characters rozšíření (archivní pole, referenceImages, soulIdStyle, usageCount)
+- [x] DB migrace: 0003_cheerful_hemingway.sql aplikována (6/6 příkazů OK)
+- [x] db.ts: getUserCredits, getOrCreateCredits, spendCredits, earnCredits, getCreditTransactions
+- [x] db.ts: CREDIT_COSTS (video=20, scene=3, soul_id=5), SIGNUP_BONUS=100
+- [x] db.ts: updateCharacter, incrementCharacterUsage, addCharacterReferenceImage, removeCharacterReferenceImage
+- [x] routers.ts: credits router (balance, history, costs, spend, earn, adminGrant)
+- [x] routers.ts: characters.generateMotion (Kling Motion s pohybem kamery, 9 presetů)
+- [x] routers.ts: characters.generateSoulId (credit check + AI generování portrétu)
+- [x] routers.ts: characters.update (update jména, popisu, osobnosti, hlasu)
+- [x] Characters.tsx: Soul Gallery archiv — grid karet s Soul ID portréty
+- [x] Characters.tsx: MotionDialog — Kling Motion generátor s 9 pohybovými presety
+- [x] Characters.tsx: foto upload pro referenční fotky (S3)
+- [x] Characters.tsx: Soul ID generování s credit check
+- [x] Credits.tsx: nová stránka s přehledem zůstatku, ceníkem a historií transakcí
+- [x] CreditsWidget.tsx: sdílená komponenta — žlutý badge v navigaci (Home + Studio)
+- [x] App.tsx: route /credits přidána
+- [x] credits.test.ts: 14 testů pro credits systém a Kling Motion (44/44 celkem passing)

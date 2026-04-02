@@ -1,6 +1,9 @@
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, desc, asc, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, videoProjects, scenes, characters, audioTracks } from "../drizzle/schema";
+import {
+  InsertUser, users, videoProjects, scenes, characters, audioTracks,
+  credits, creditTransactions,
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -96,12 +99,13 @@ export async function getProjectAudioTracks(projectId: number) {
 export async function getUserCharacters(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(characters).where(eq(characters.userId, userId)).orderBy(desc(characters.createdAt));
+  return db.select().from(characters).where(eq(characters.userId, userId)).orderBy(desc(characters.updatedAt));
 }
 
 export async function createCharacter(data: {
   userId: number; projectId?: number; name: string; description?: string;
   personality?: string; referenceImageUrl?: string; voiceId?: string; voiceName?: string;
+  tags?: string[];
 }) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
@@ -110,6 +114,7 @@ export async function createCharacter(data: {
     description: data.description ?? null, personality: data.personality ?? null,
     referenceImageUrl: data.referenceImageUrl ?? null,
     voiceId: data.voiceId ?? null, voiceName: data.voiceName ?? null,
+    tags: (data.tags ?? []) as unknown as null,
   }).$returningId();
   return result[0]?.id;
 }
@@ -121,22 +126,50 @@ export async function getCharacter(id: number) {
   return result[0] ?? null;
 }
 
+export async function updateCharacter(id: number, data: {
+  name?: string; description?: string; personality?: string;
+  voiceId?: string; voiceName?: string; defaultEmotion?: string;
+  motionPreset?: string; tags?: string[];
+}) {
+  const db = await getDb();
+  if (!db) return;
+  const set: Record<string, unknown> = {};
+  if (data.name !== undefined) set.name = data.name;
+  if (data.description !== undefined) set.description = data.description;
+  if (data.personality !== undefined) set.personality = data.personality;
+  if (data.voiceId !== undefined) set.voiceId = data.voiceId;
+  if (data.voiceName !== undefined) set.voiceName = data.voiceName;
+  if (data.defaultEmotion !== undefined) set.defaultEmotion = data.defaultEmotion;
+  if (data.motionPreset !== undefined) set.motionPreset = data.motionPreset;
+  if (data.tags !== undefined) set.tags = data.tags as unknown as null;
+  if (Object.keys(set).length === 0) return;
+  await db.update(characters).set(set).where(eq(characters.id, id));
+}
+
 export async function updateCharacterSoulId(id: number, soulIdImageUrl: string) {
   const db = await getDb();
   if (!db) return;
   await db.update(characters).set({ soulIdImageUrl }).where(eq(characters.id, id));
 }
 
+export async function incrementCharacterUsage(id: number, projectId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(characters).set({
+    usageCount: sql`${characters.usageCount} + 1`,
+    lastUsedProjectId: projectId,
+  }).where(eq(characters.id, id));
+}
+
 export type ReferenceImage = {
   url: string;
-  label: string;  // e.g. "Přední pohled", "Boční pohled", "Character sheet"
-  isMultiView: boolean; // true = one image with multiple angles
+  label: string;
+  isMultiView: boolean;
 };
 
 export async function updateCharacterReferenceImages(id: number, images: ReferenceImage[]) {
   const db = await getDb();
   if (!db) return;
-  // Also set primary referenceImageUrl to first image for backwards compat
   const primary = images[0]?.url ?? null;
   await db.update(characters).set({
     referenceImages: images as unknown as null,
@@ -145,7 +178,7 @@ export async function updateCharacterReferenceImages(id: number, images: Referen
 }
 
 export async function addCharacterReferenceImage(id: number, image: ReferenceImage, existing: ReferenceImage[]) {
-  const updated = [...existing, image].slice(0, 5); // max 5
+  const updated = [...existing, image].slice(0, 5);
   await updateCharacterReferenceImages(id, updated);
   return updated;
 }
@@ -160,4 +193,82 @@ export async function deleteCharacter(id: number): Promise<void> {
   const db = await getDb();
   if (!db) return;
   await db.delete(characters).where(eq(characters.id, id));
+}
+
+// ─── Credits ──────────────────────────────────────────────────────────────────
+// Ceny v kreditech
+export const CREDIT_COSTS = {
+  video_generation: 20,      // Celé video (odečte se při spuštění)
+  scene_generation: 3,       // Každá scéna zvlášť (odečte se po dokončení)
+  soul_id_generation: 5,     // Generování Soul ID portrétu
+} as const;
+
+export const SIGNUP_BONUS = 100; // Startovní kredity pro nového uživatele
+
+export async function getOrCreateCredits(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const existing = await db.select().from(credits).where(eq(credits.userId, userId)).limit(1);
+  if (existing[0]) return existing[0];
+  // Nový uživatel — signup bonus
+  const result = await db.insert(credits).values({
+    userId,
+    balance: SIGNUP_BONUS,
+    totalEarned: SIGNUP_BONUS,
+    totalSpent: 0,
+  }).$returningId();
+  await db.insert(creditTransactions).values({
+    userId,
+    amount: SIGNUP_BONUS,
+    type: "signup_bonus",
+    description: `Startovní bonus ${SIGNUP_BONUS} kreditů`,
+  });
+  const newRecord = await db.select().from(credits).where(eq(credits.id, result[0].id)).limit(1);
+  return newRecord[0];
+}
+
+export async function getUserCredits(userId: number) {
+  return getOrCreateCredits(userId);
+}
+
+export async function spendCredits(userId: number, amount: number, type: "video_generation" | "scene_generation" | "soul_id_generation", description: string, projectId?: number): Promise<{ success: boolean; balance: number; error?: string }> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const userCredits = await getOrCreateCredits(userId);
+  if (userCredits.balance < amount) {
+    return { success: false, balance: userCredits.balance, error: `Nedostatek kreditů. Potřebuješ ${amount}, máš ${userCredits.balance}.` };
+  }
+  await db.update(credits).set({
+    balance: sql`${credits.balance} - ${amount}`,
+    totalSpent: sql`${credits.totalSpent} + ${amount}`,
+  }).where(eq(credits.userId, userId));
+  await db.insert(creditTransactions).values({
+    userId, amount: -amount, type, description, projectId: projectId ?? null,
+  });
+  const updated = await db.select().from(credits).where(eq(credits.userId, userId)).limit(1);
+  return { success: true, balance: updated[0]?.balance ?? 0 };
+}
+
+export async function earnCredits(userId: number, amount: number, type: "admin_grant" | "daily_bonus", description: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await getOrCreateCredits(userId); // ensure record exists
+  await db.update(credits).set({
+    balance: sql`${credits.balance} + ${amount}`,
+    totalEarned: sql`${credits.totalEarned} + ${amount}`,
+  }).where(eq(credits.userId, userId));
+  await db.insert(creditTransactions).values({
+    userId, amount, type, description,
+  });
+  const updated = await db.select().from(credits).where(eq(credits.userId, userId)).limit(1);
+  return updated[0];
+}
+
+export async function getCreditTransactions(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(creditTransactions)
+    .where(eq(creditTransactions.userId, userId))
+    .orderBy(desc(creditTransactions.createdAt))
+    .limit(limit);
 }
