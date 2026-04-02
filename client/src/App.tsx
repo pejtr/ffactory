@@ -9,6 +9,8 @@ import Studio from "./pages/Studio";
 import ProjectView from "./pages/ProjectView";
 import Characters from "./pages/Characters";
 import SharedVideo from "./pages/SharedVideo";
+import StoryStudio from "./pages/StoryStudio";
+import NotebookDetail from "./pages/NotebookDetail";
 import Credits from "./pages/Credits";
 import GenerateHub from "./pages/GenerateHub";
 
@@ -20,6 +22,8 @@ function Router() {
       <Route path="/project/:id" component={ProjectView} />
       <Route path="/characters" component={Characters} />
       <Route path="/share/:token" component={SharedVideo} />
+      <Route path="/story" component={StoryStudio} />
+      <Route path="/story/:id" component={NotebookDetail} />
       <Route path="/credits" component={Credits} />
       <Route path="/generate" component={GenerateHub} />
       <Route path="/404" component={NotFound} />

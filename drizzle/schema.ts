@@ -72,14 +72,6 @@ export const characters = mysqlTable("characters", {
   voiceId: varchar("voiceId", { length: 128 }),
   voiceName: varchar("voiceName", { length: 128 }),
   defaultEmotion: varchar("defaultEmotion", { length: 64 }).default("neutral"),
-  // Kling Motion — uložené pohyby kamery pro tuto postavu
-  motionPreset: varchar("motionPreset", { length: 64 }).default("static"),
-  // Archivní tagy pro filtrování
-  tags: json("tags"),                               // string[]
-  // Počet použití v projektech
-  usageCount: int("usageCount").default(0).notNull(),
-  // Poslední projekt, ve kterém byla postava použita
-  lastUsedProjectId: int("lastUsedProjectId"),
   metadata: json("metadata"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -148,74 +140,160 @@ export const audioTracks = mysqlTable("audio_tracks", {
 export type AudioTrack = typeof audioTracks.$inferSelect;
 export type InsertAudioTrack = typeof audioTracks.$inferInsert;
 
-// ─── Credits (kreditový systém) ────────────────────────────────────────────────
-export const credits = mysqlTable("credits", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  balance: int("balance").default(100).notNull(),   // aktuální zůstatek
-  totalEarned: int("totalEarned").default(100).notNull(),
-  totalSpent: int("totalSpent").default(0).notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
-
-export type Credits = typeof credits.$inferSelect;
-export type InsertCredits = typeof credits.$inferInsert;
-
-// ─── Credit Transactions ───────────────────────────────────────────────────────
+// ─── Credits ───────────────────────────────────────────────────────────────────
 export const creditTransactions = mysqlTable("credit_transactions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  amount: int("amount").notNull(),                  // kladné = příjem, záporné = výdaj
+  amount: int("amount").notNull(),
   type: mysqlEnum("type", [
     "signup_bonus",
+    "purchase",
     "video_generation",
-    "scene_generation",
-    "soul_id_generation",
-    "admin_grant",
-    "daily_bonus",
+    "image_generation",
+    "audio_generation",
+    "motion_generation",
+    "video_edit",
+    "image_edit",
     "generate_hub",
+    "story_script",
+    "story_video",
+    "story_thumbnail",
+    "refund",
   ]).notNull(),
-  description: varchar("description", { length: 255 }),
-  projectId: int("projectId"),
+  description: text("description"),
+  referenceId: varchar("referenceId", { length: 128 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type CreditTransaction = typeof creditTransactions.$inferSelect;
 export type InsertCreditTransaction = typeof creditTransactions.$inferInsert;
 
-// ─── Generate Hub Generations ──────────────────────────────────────────────────────────────────────────────────────
+// ─── Generations (Generate Hub) ────────────────────────────────────────────────
 export const generations = mysqlTable("generations", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  model: mysqlEnum("model", [
-    "nano-banana-2",
-    "nano-banana-2-edit",
-    "nano-banana-pro",
-    "nano-banana-pro-edit",
-    "seedream-5-edit",
-    "kling-motion-control",
-    "kling-video-edit",
-    "kling-i2v",
-    "hailuo-t2v",
-    "hailuo-i2v",
-    "wan22-t2v",
-    "wan22-i2v",
-  ]).notNull(),
-  type: mysqlEnum("type", ["t2i", "i2i", "t2v", "i2v", "v2v"]).notNull(),
-  prompt: text("prompt").notNull(),
-  inputImageUrls: json("inputImageUrls"),   // string[]
+  model: varchar("model", { length: 128 }).notNull(),
+  type: mysqlEnum("type", ["text_to_image", "image_to_image", "text_to_video", "image_to_video", "video_edit", "motion_control"]).notNull(),
+  prompt: text("prompt"),
+  inputImageUrl: text("inputImageUrl"),
   inputVideoUrl: text("inputVideoUrl"),
-  resultUrl: text("resultUrl"),             // final image/video URL
-  resultUrls: json("resultUrls"),           // string[] for multi-image results
-  falRequestId: varchar("falRequestId", { length: 128 }),
-  klingTaskId: varchar("klingTaskId", { length: 128 }),
-  creditsCost: int("creditsCost").default(0).notNull(),
-  status: mysqlEnum("status", ["pending", "processing", "completed", "failed"]).default("pending").notNull(),
-  errorMessage: text("errorMessage"),
+  outputUrl: text("outputUrl"),
+  outputUrls: json("outputUrls"),
+  status: mysqlEnum("status", ["pending", "generating", "completed", "failed"]).default("pending").notNull(),
+  taskId: varchar("taskId", { length: 256 }),
+  creditsUsed: int("creditsUsed").default(0),
   metadata: json("metadata"),
+  errorMessage: text("errorMessage"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
 export type Generation = typeof generations.$inferSelect;
 export type InsertGeneration = typeof generations.$inferInsert;
+
+// ─── Story Ecosystem (NotebookLM-style) ────────────────────────────────────────
+export const storyNotebooks = mysqlTable("story_notebooks", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  niche: varchar("niche", { length: 128 }),
+  targetAudience: text("targetAudience"),
+  contentStyle: mysqlEnum("contentStyle", [
+    "educational",
+    "storytelling",
+    "explainer",
+    "documentary",
+    "entertainment",
+    "news",
+    "tutorial",
+  ]).default("educational").notNull(),
+  language: varchar("language", { length: 16 }).default("cs").notNull(),
+  aiAnalysis: json("aiAnalysis"),        // niche analysis, hook patterns, viral score
+  hookTemplates: json("hookTemplates"),  // extracted hook library
+  videoIdeas: json("videoIdeas"),        // generated video ideas
+  status: mysqlEnum("status", ["active", "archived"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StoryNotebook = typeof storyNotebooks.$inferSelect;
+export type InsertStoryNotebook = typeof storyNotebooks.$inferInsert;
+
+export const storySources = mysqlTable("story_sources", {
+  id: int("id").autoincrement().primaryKey(),
+  notebookId: int("notebookId").notNull(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["youtube_url", "text", "url", "file"]).notNull(),
+  title: varchar("title", { length: 512 }),
+  content: text("content"),           // raw text / transcript
+  url: text("url"),
+  summary: text("summary"),           // AI-generated summary
+  keyInsights: json("keyInsights"),   // extracted insights
+  hookPatterns: json("hookPatterns"), // extracted hooks
+  viralScore: float("viralScore"),    // 0-100 viral potential score
+  metadata: json("metadata"),
+  status: mysqlEnum("status", ["pending", "processing", "ready", "failed"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type StorySource = typeof storySources.$inferSelect;
+export type InsertStorySource = typeof storySources.$inferInsert;
+
+export const storyScripts = mysqlTable("story_scripts", {
+  id: int("id").autoincrement().primaryKey(),
+  notebookId: int("notebookId").notNull(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 512 }).notNull(),
+  hook: text("hook"),
+  script: text("script").notNull(),
+  scriptType: mysqlEnum("scriptType", [
+    "youtube_short",
+    "youtube_long",
+    "explainer",
+    "whiteboard",
+    "documentary",
+    "story",
+    "educational",
+  ]).default("educational").notNull(),
+  targetDurationSec: int("targetDurationSec").default(180),
+  language: varchar("language", { length: 16 }).default("cs").notNull(),
+  // SEO
+  seoTitles: json("seoTitles"),       // 10 click-worthy titles
+  seoDescription: text("seoDescription"),
+  seoTags: json("seoTags"),
+  // Generated outputs
+  voiceoverUrl: text("voiceoverUrl"),
+  videoUrl: text("videoUrl"),
+  videoStyle: mysqlEnum("videoStyle", [
+    "whiteboard",
+    "kinetic",
+    "anime",
+    "watercolor",
+    "hand_drawn",
+    "classic",
+    "illusion",
+  ]),
+  videoStatus: mysqlEnum("videoStatus", ["none", "generating", "completed", "failed"]).default("none").notNull(),
+  videoTaskId: varchar("videoTaskId", { length: 256 }),
+  creditsUsed: int("creditsUsed").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StoryScript = typeof storyScripts.$inferSelect;
+export type InsertStoryScript = typeof storyScripts.$inferInsert;
+
+export const storyThumbnails = mysqlTable("story_thumbnails", {
+  id: int("id").autoincrement().primaryKey(),
+  scriptId: int("scriptId").notNull(),
+  userId: int("userId").notNull(),
+  prompt: text("prompt"),
+  style: varchar("style", { length: 64 }),
+  imageUrl: text("imageUrl"),
+  isSelected: boolean("isSelected").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type StoryThumbnail = typeof storyThumbnails.$inferSelect;
+export type InsertStoryThumbnail = typeof storyThumbnails.$inferInsert;

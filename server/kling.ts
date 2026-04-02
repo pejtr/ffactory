@@ -37,7 +37,7 @@ async function klingRequest(path: string, method: string, body?: unknown) {
 export async function klingTextToVideo(params: {
   prompt: string;
   negativePrompt?: string;
-  modelName?: string;
+  modelName?: string; // "kling-v3" | "kling-v2-master" | "kling-v1-6"
   mode?: "std" | "pro";
   duration?: "5" | "10";
   aspectRatio?: "16:9" | "9:16" | "1:1";
@@ -80,32 +80,6 @@ export async function klingImageToVideo(params: {
     mode: params.mode ?? "std",
     duration: params.duration ?? "5",
     camera_control: params.cameraControl,
-  });
-}
-
-// ─── Kling Motion Control — Transfer motion from reference video to image ─────
-// Animates a still image using motion extracted from a reference video clip.
-// The reference video provides the motion pattern; the image provides the subject.
-export async function klingMotionControl(params: {
-  imageUrl: string;           // Character/subject image to animate
-  motionVideoUrl: string;     // Reference video to extract motion from
-  prompt?: string;            // Optional motion description
-  negativePrompt?: string;
-  modelName?: string;         // "kling-v2-master" recommended for motion control
-  mode?: "std" | "pro";
-  duration?: "5" | "10";
-  aspectRatio?: "16:9" | "9:16" | "1:1";
-}) {
-  // Kling Motion Control uses the image2video endpoint with motion_video_url
-  return klingRequest("/v1/videos/image2video", "POST", {
-    model_name: params.modelName ?? "kling-v2-master",
-    image: params.imageUrl,
-    motion_video_url: params.motionVideoUrl,
-    prompt: params.prompt ?? "Animate this character with the reference motion",
-    negative_prompt: params.negativePrompt ?? "blurry, low quality, distorted",
-    mode: params.mode ?? "std",
-    duration: params.duration ?? "5",
-    aspect_ratio: params.aspectRatio ?? "16:9",
   });
 }
 

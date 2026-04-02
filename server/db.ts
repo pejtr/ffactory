@@ -1,10 +1,6 @@
-import { eq, desc, asc, sql } from "drizzle-orm";
+import { eq, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import {
-  InsertUser, users, videoProjects, scenes, characters, audioTracks,
-  credits, creditTransactions, generations,
-  type InsertGeneration, type Generation,
-} from "../drizzle/schema";
+import { InsertUser, users, videoProjects, scenes, characters, audioTracks } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -100,13 +96,12 @@ export async function getProjectAudioTracks(projectId: number) {
 export async function getUserCharacters(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(characters).where(eq(characters.userId, userId)).orderBy(desc(characters.updatedAt));
+  return db.select().from(characters).where(eq(characters.userId, userId)).orderBy(desc(characters.createdAt));
 }
 
 export async function createCharacter(data: {
   userId: number; projectId?: number; name: string; description?: string;
   personality?: string; referenceImageUrl?: string; voiceId?: string; voiceName?: string;
-  tags?: string[];
 }) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
@@ -115,7 +110,6 @@ export async function createCharacter(data: {
     description: data.description ?? null, personality: data.personality ?? null,
     referenceImageUrl: data.referenceImageUrl ?? null,
     voiceId: data.voiceId ?? null, voiceName: data.voiceName ?? null,
-    tags: (data.tags ?? []) as unknown as null,
   }).$returningId();
   return result[0]?.id;
 }
@@ -127,50 +121,22 @@ export async function getCharacter(id: number) {
   return result[0] ?? null;
 }
 
-export async function updateCharacter(id: number, data: {
-  name?: string; description?: string; personality?: string;
-  voiceId?: string; voiceName?: string; defaultEmotion?: string;
-  motionPreset?: string; tags?: string[];
-}) {
-  const db = await getDb();
-  if (!db) return;
-  const set: Record<string, unknown> = {};
-  if (data.name !== undefined) set.name = data.name;
-  if (data.description !== undefined) set.description = data.description;
-  if (data.personality !== undefined) set.personality = data.personality;
-  if (data.voiceId !== undefined) set.voiceId = data.voiceId;
-  if (data.voiceName !== undefined) set.voiceName = data.voiceName;
-  if (data.defaultEmotion !== undefined) set.defaultEmotion = data.defaultEmotion;
-  if (data.motionPreset !== undefined) set.motionPreset = data.motionPreset;
-  if (data.tags !== undefined) set.tags = data.tags as unknown as null;
-  if (Object.keys(set).length === 0) return;
-  await db.update(characters).set(set).where(eq(characters.id, id));
-}
-
 export async function updateCharacterSoulId(id: number, soulIdImageUrl: string) {
   const db = await getDb();
   if (!db) return;
   await db.update(characters).set({ soulIdImageUrl }).where(eq(characters.id, id));
 }
 
-export async function incrementCharacterUsage(id: number, projectId: number) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(characters).set({
-    usageCount: sql`${characters.usageCount} + 1`,
-    lastUsedProjectId: projectId,
-  }).where(eq(characters.id, id));
-}
-
 export type ReferenceImage = {
   url: string;
-  label: string;
-  isMultiView: boolean;
+  label: string;  // e.g. "Přední pohled", "Boční pohled", "Character sheet"
+  isMultiView: boolean; // true = one image with multiple angles
 };
 
 export async function updateCharacterReferenceImages(id: number, images: ReferenceImage[]) {
   const db = await getDb();
   if (!db) return;
+  // Also set primary referenceImageUrl to first image for backwards compat
   const primary = images[0]?.url ?? null;
   await db.update(characters).set({
     referenceImages: images as unknown as null,
@@ -179,7 +145,7 @@ export async function updateCharacterReferenceImages(id: number, images: Referen
 }
 
 export async function addCharacterReferenceImage(id: number, image: ReferenceImage, existing: ReferenceImage[]) {
-  const updated = [...existing, image].slice(0, 5);
+  const updated = [...existing, image].slice(0, 5); // max 5
   await updateCharacterReferenceImages(id, updated);
   return updated;
 }
@@ -196,117 +162,191 @@ export async function deleteCharacter(id: number): Promise<void> {
   await db.delete(characters).where(eq(characters.id, id));
 }
 
-// ─── Credits ──────────────────────────────────────────────────────────────────
-// Ceny v kreditech
+// ─── Credits ───────────────────────────────────────────────────────────────────
+import { creditTransactions, generations, storyNotebooks, storySources, storyScripts, storyThumbnails } from "../drizzle/schema";
+import { sum } from "drizzle-orm";
+
 export const CREDIT_COSTS = {
-  video_generation: 20,      // Celé video (odečte se při spuštění)
-  scene_generation: 3,       // Každá scéna zvlášť (odečte se po dokončení)
-  soul_id_generation: 5,     // Generování Soul ID portrétu
-  // Generate Hub
-  nano_banana_t2i: 2,        // Nano Banana 2 T2I (1 obrázek)
-  nano_banana_edit: 3,       // Nano Banana 2 Edit
-  seedream_edit: 4,          // Seedream 5 Lite Edit
-  kling_motion_control: 8,   // Kling Motion Control (přenos pohybu)
-  kling_video_edit: 10,      // Kling O1 Video Edit
-  kling_i2v: 5,              // Kling 3.0 Pro I2V
+  video_generation: 20,
+  image_generation: 2,
+  audio_generation: 5,
+  motion_generation: 10,
+  video_edit: 8,
+  image_edit: 3,
+  generate_hub: 2,
+  story_script: 5,
+  story_video: 15,
+  story_thumbnail: 2,
 } as const;
 
-export const SIGNUP_BONUS = 100; // Startovní kredity pro nového uživatele
-
-export async function getOrCreateCredits(userId: number) {
+export async function getUserCredits(userId: number): Promise<number> {
   const db = await getDb();
-  if (!db) throw new Error("DB not available");
-  const existing = await db.select().from(credits).where(eq(credits.userId, userId)).limit(1);
-  if (existing[0]) return existing[0];
-  // Nový uživatel — signup bonus
-  const result = await db.insert(credits).values({
-    userId,
-    balance: SIGNUP_BONUS,
-    totalEarned: SIGNUP_BONUS,
-    totalSpent: 0,
-  }).$returningId();
-  await db.insert(creditTransactions).values({
-    userId,
-    amount: SIGNUP_BONUS,
-    type: "signup_bonus",
-    description: `Startovní bonus ${SIGNUP_BONUS} kreditů`,
-  });
-  const newRecord = await db.select().from(credits).where(eq(credits.id, result[0].id)).limit(1);
-  return newRecord[0];
+  if (!db) return 0;
+  const result = await db.select({ total: sum(creditTransactions.amount) })
+    .from(creditTransactions).where(eq(creditTransactions.userId, userId));
+  return Number(result[0]?.total ?? 0);
 }
 
-export async function getUserCredits(userId: number) {
-  return getOrCreateCredits(userId);
-}
-
-export async function spendCredits(userId: number, amount: number, type: "video_generation" | "scene_generation" | "soul_id_generation" | "generate_hub", description: string, projectId?: number): Promise<{ success: boolean; balance: number; error?: string }> {
-  const db = await getDb();
-  if (!db) throw new Error("DB not available");
-  const userCredits = await getOrCreateCredits(userId);
-  if (userCredits.balance < amount) {
-    return { success: false, balance: userCredits.balance, error: `Nedostatek kreditů. Potřebuješ ${amount}, máš ${userCredits.balance}.` };
-  }
-  await db.update(credits).set({
-    balance: sql`${credits.balance} - ${amount}`,
-    totalSpent: sql`${credits.totalSpent} + ${amount}`,
-  }).where(eq(credits.userId, userId));
-  await db.insert(creditTransactions).values({
-    userId, amount: -amount, type, description, projectId: projectId ?? null,
-  });
-  const updated = await db.select().from(credits).where(eq(credits.userId, userId)).limit(1);
-  return { success: true, balance: updated[0]?.balance ?? 0 };
-}
-
-export async function earnCredits(userId: number, amount: number, type: "admin_grant" | "daily_bonus" | "signup_bonus", description: string) {
-  const db = await getDb();
-  if (!db) throw new Error("DB not available");
-  await getOrCreateCredits(userId); // ensure record exists
-  await db.update(credits).set({
-    balance: sql`${credits.balance} + ${amount}`,
-    totalEarned: sql`${credits.totalEarned} + ${amount}`,
-  }).where(eq(credits.userId, userId));
-  await db.insert(creditTransactions).values({
-    userId, amount, type, description,
-  });
-  const updated = await db.select().from(credits).where(eq(credits.userId, userId)).limit(1);
-  return updated[0];
-}
-
-export async function getCreditTransactions(userId: number, limit = 20) {
+export async function getCreditHistory(userId: number, limit = 20) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(creditTransactions)
     .where(eq(creditTransactions.userId, userId))
-    .orderBy(desc(creditTransactions.createdAt))
-    .limit(limit);
+    .orderBy(desc(creditTransactions.createdAt)).limit(limit);
 }
 
-// ─── Generate Hub Generations ─────────────────────────────────────────────────
-export async function createGeneration(data: Omit<InsertGeneration, 'id' | 'createdAt' | 'updatedAt'>): Promise<number> {
+export async function earnCredits(userId: number, amount: number, type: typeof creditTransactions.$inferInsert["type"], description?: string, referenceId?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.insert(creditTransactions).values({ userId, amount: Math.abs(amount), type, description: description ?? null, referenceId: referenceId ?? null });
+}
+
+export async function spendCredits(userId: number, amount: number, type: typeof creditTransactions.$inferInsert["type"], description?: string, referenceId?: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const balance = await getUserCredits(userId);
+  if (balance < amount) return false;
+  await db.insert(creditTransactions).values({ userId, amount: -Math.abs(amount), type, description: description ?? null, referenceId: referenceId ?? null });
+  return true;
+}
+
+// ─── Generations ───────────────────────────────────────────────────────────────
+export async function createGeneration(data: typeof generations.$inferInsert) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   const result = await db.insert(generations).values(data).$returningId();
-  return result[0].id;
+  return result[0]?.id;
 }
 
-export async function updateGeneration(id: number, data: Partial<Pick<Generation, 'status' | 'resultUrl' | 'resultUrls' | 'falRequestId' | 'klingTaskId' | 'errorMessage' | 'metadata'>>): Promise<void> {
+export async function getGeneration(id: number) {
   const db = await getDb();
-  if (!db) throw new Error("DB not available");
+  if (!db) return null;
+  const result = await db.select().from(generations).where(eq(generations.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function updateGeneration(id: number, data: Partial<typeof generations.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
   await db.update(generations).set(data).where(eq(generations.id, id));
 }
 
-export async function getGeneration(id: number): Promise<Generation | undefined> {
-  const db = await getDb();
-  if (!db) return undefined;
-  const result = await db.select().from(generations).where(eq(generations.id, id)).limit(1);
-  return result[0];
-}
-
-export async function getUserGenerations(userId: number, limit = 20): Promise<Generation[]> {
+export async function getUserGenerations(userId: number, limit = 20) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(generations)
-    .where(eq(generations.userId, userId))
-    .orderBy(desc(generations.createdAt))
-    .limit(limit);
+  return db.select().from(generations).where(eq(generations.userId, userId)).orderBy(desc(generations.createdAt)).limit(limit);
+}
+
+// ─── Story Notebooks ───────────────────────────────────────────────────────────
+export async function createStoryNotebook(data: typeof storyNotebooks.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(storyNotebooks).values(data).$returningId();
+  return result[0]?.id;
+}
+
+export async function getStoryNotebook(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(storyNotebooks).where(eq(storyNotebooks.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function getUserStoryNotebooks(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(storyNotebooks).where(eq(storyNotebooks.userId, userId)).orderBy(desc(storyNotebooks.createdAt));
+}
+
+export async function updateStoryNotebook(id: number, data: Partial<typeof storyNotebooks.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(storyNotebooks).set(data).where(eq(storyNotebooks.id, id));
+}
+
+export async function deleteStoryNotebook(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(storyNotebooks).where(eq(storyNotebooks.id, id));
+}
+
+// ─── Story Sources ─────────────────────────────────────────────────────────────
+export async function createStorySource(data: typeof storySources.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(storySources).values(data).$returningId();
+  return result[0]?.id;
+}
+
+export async function getNotebookSources(notebookId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(storySources).where(eq(storySources.notebookId, notebookId)).orderBy(desc(storySources.createdAt));
+}
+
+export async function updateStorySource(id: number, data: Partial<typeof storySources.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(storySources).set(data).where(eq(storySources.id, id));
+}
+
+export async function deleteStorySource(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(storySources).where(eq(storySources.id, id));
+}
+
+// ─── Story Scripts ─────────────────────────────────────────────────────────────
+export async function createStoryScript(data: typeof storyScripts.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(storyScripts).values(data).$returningId();
+  return result[0]?.id;
+}
+
+export async function getStoryScript(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(storyScripts).where(eq(storyScripts.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function getNotebookScripts(notebookId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(storyScripts).where(eq(storyScripts.notebookId, notebookId)).orderBy(desc(storyScripts.createdAt));
+}
+
+export async function updateStoryScript(id: number, data: Partial<typeof storyScripts.$inferInsert>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(storyScripts).set(data).where(eq(storyScripts.id, id));
+}
+
+export async function deleteStoryScript(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(storyScripts).where(eq(storyScripts.id, id));
+}
+
+// ─── Story Thumbnails ──────────────────────────────────────────────────────────
+export async function createStoryThumbnail(data: typeof storyThumbnails.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(storyThumbnails).values(data).$returningId();
+  return result[0]?.id;
+}
+
+export async function getScriptThumbnails(scriptId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(storyThumbnails).where(eq(storyThumbnails.scriptId, scriptId)).orderBy(desc(storyThumbnails.createdAt));
+}
+
+export async function setSelectedThumbnail(scriptId: number, thumbnailId: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Deselect all, then select the chosen one
+  await db.update(storyThumbnails).set({ isSelected: false }).where(eq(storyThumbnails.scriptId, scriptId));
+  await db.update(storyThumbnails).set({ isSelected: true }).where(eq(storyThumbnails.id, thumbnailId));
 }

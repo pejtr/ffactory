@@ -3,8 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
-import { Film, Zap, Music, Users, Star, ChevronRight, Cpu, Layers, Mic, Video, Wand2, Globe, Sparkles } from "lucide-react";
-import { CreditsWidget } from "@/components/CreditsWidget";
+import { Film, Zap, Music, Users, Star, ChevronRight, Cpu, Layers, Mic, Video, Wand2, Globe } from "lucide-react";
 
 const MODELS = [
   { name: "Kling 3.0 Omni", type: "Dialogue + Audio", color: "text-blue-400", icon: "mic" },
@@ -40,8 +39,6 @@ export default function Home() {
             {isAuthenticated ? (
               <>
                 <Link href="/characters"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><Users className="w-4 h-4 mr-2" />Characters</Button></Link>
-                <Link href="/generate"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><Sparkles className="w-4 h-4 mr-2" />Generate</Button></Link>
-                <CreditsWidget />
                 <Link href="/studio"><Button size="sm" className="glow-blue font-display text-xs tracking-wider">OPEN STUDIO <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
               </>
             ) : (
