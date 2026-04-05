@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import {
   BookOpen, Plus, Sparkles, ArrowLeft, Trash2, ChevronRight,
   Globe, FileText, Zap, BarChart2, Lightbulb, Target, TrendingUp,
-  Users, Brain, Layers
+  Users, Brain, Layers, Flame, Trophy, ExternalLink
 } from "lucide-react";
 import { CreditsWidget } from "@/components/CreditsWidget";
 import { getLoginUrl } from "@/const";
@@ -40,6 +40,137 @@ const STYLE_ICONS: Record<ContentStyle, React.ReactNode> = {
   news: <BarChart2 className="w-4 h-4" />,
   tutorial: <Layers className="w-4 h-4" />,
 };
+
+// ─── Viral Score Leaderboard ─────────────────────────────────────────────────
+function ViralScoreLeaderboard() {
+  const { user } = useAuth();
+  const { data: topSources, isLoading } = trpc.story.sources.topViral.useQuery(
+    { limit: 5 },
+    { enabled: !!user }
+  );
+
+  if (isLoading) {
+    return (
+      <div className="mb-10">
+        <div className="flex items-center gap-2 mb-4">
+          <Trophy className="w-4 h-4 text-yellow-400" />
+          <h2 className="font-display text-base text-foreground">TOP VIRAL ZDROJE</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="h-28 rounded-xl bg-[oklch(0.10_0.02_240)] animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!topSources || topSources.length === 0) return null;
+
+  const getScoreColor = (score: number | null) => {
+    if (!score) return "text-muted-foreground";
+    const s = score / 10;
+    if (s >= 8) return "text-red-400";
+    if (s >= 6) return "text-orange-400";
+    if (s >= 4) return "text-yellow-400";
+    if (s >= 2) return "text-blue-400";
+    return "text-muted-foreground";
+  };
+
+  const getScoreBg = (score: number | null) => {
+    if (!score) return "bg-[oklch(0.10_0.02_240)]";
+    const s = score / 10;
+    if (s >= 8) return "bg-red-950/40 border-red-500/30";
+    if (s >= 6) return "bg-orange-950/40 border-orange-500/30";
+    if (s >= 4) return "bg-yellow-950/40 border-yellow-500/30";
+    if (s >= 2) return "bg-blue-950/40 border-blue-500/30";
+    return "bg-[oklch(0.10_0.02_240)] border-[oklch(0.22_0.03_230)]";
+  };
+
+  const getRankIcon = (rank: number) => {
+    if (rank === 0) return <span className="text-yellow-400 text-base">🥇</span>;
+    if (rank === 1) return <span className="text-slate-300 text-base">🥈</span>;
+    if (rank === 2) return <span className="text-amber-600 text-base">🥉</span>;
+    return <span className="font-mono text-xs text-muted-foreground">#{rank + 1}</span>;
+  };
+
+  // SVG arc gauge (mini)
+  const MiniGauge = ({ score }: { score: number | null }) => {
+    const s = (score ?? 0) / 100;
+    const r = 18;
+    const cx = 22;
+    const cy = 22;
+    const startAngle = -225;
+    const sweepAngle = 270;
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const arcX = (angle: number) => cx + r * Math.cos(toRad(angle));
+    const arcY = (angle: number) => cy + r * Math.sin(toRad(angle));
+    const endAngle = startAngle + sweepAngle * s;
+    const largeArc = sweepAngle * s > 180 ? 1 : 0;
+    const trackPath = `M ${arcX(startAngle)} ${arcY(startAngle)} A ${r} ${r} 0 1 1 ${arcX(startAngle + sweepAngle - 0.01)} ${arcY(startAngle + sweepAngle - 0.01)}`;
+    const fillPath = s > 0
+      ? `M ${arcX(startAngle)} ${arcY(startAngle)} A ${r} ${r} 0 ${largeArc} 1 ${arcX(endAngle)} ${arcY(endAngle)}`
+      : "";
+    const scoreColor = score && score >= 80 ? "#f87171" : score && score >= 60 ? "#fb923c" : score && score >= 40 ? "#facc15" : "#60a5fa";
+    return (
+      <svg width="44" height="44" viewBox="0 0 44 44">
+        <path d={trackPath} fill="none" stroke="oklch(0.22 0.03 230)" strokeWidth="3" strokeLinecap="round" />
+        {fillPath && <path d={fillPath} fill="none" stroke={scoreColor} strokeWidth="3" strokeLinecap="round" />}
+        <text x="22" y="26" textAnchor="middle" fontSize="9" fontWeight="bold" fill={scoreColor}>
+          {score ? (score / 10).toFixed(1) : "–"}
+        </text>
+      </svg>
+    );
+  };
+
+  return (
+    <div className="mb-10">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-yellow-400" />
+          <h2 className="font-display text-base text-foreground tracking-wider">TOP VIRAL ZDROJE</h2>
+          <Badge variant="outline" className="text-[10px] border-yellow-500/30 text-yellow-400 px-1.5 py-0">LIVE</Badge>
+        </div>
+        <span className="text-xs text-muted-foreground">Napříč všemi notebooky</span>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {topSources.map((src, i) => (
+          <Link key={src.id} href={`/story/${src.notebookId}`}>
+            <Card className={`border p-3 hover:scale-[1.02] transition-all cursor-pointer h-full ${getScoreBg(src.viralScore)}`}>
+              {/* Rank + gauge row */}
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5">
+                  {getRankIcon(i)}
+                </div>
+                <MiniGauge score={src.viralScore} />
+              </div>
+
+              {/* Title */}
+              <p className="text-xs font-medium text-foreground line-clamp-2 mb-1.5 leading-tight">
+                {src.title ?? (src.url ? new URL(src.url).hostname : "Zdroj bez názvu")}
+              </p>
+
+              {/* Notebook badge */}
+              <div className="flex items-center gap-1 mt-auto">
+                <BookOpen className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0" />
+                <span className="text-[10px] text-muted-foreground truncate">{src.notebookTitle}</span>
+              </div>
+
+              {/* Score label */}
+              <div className={`flex items-center gap-1 mt-1.5 ${getScoreColor(src.viralScore)}`}>
+                <Flame className="w-3 h-3" />
+                <span className="text-[10px] font-mono font-bold">
+                  {src.viralScore ? (src.viralScore / 10).toFixed(1) : "–"} / 10
+                </span>
+              </div>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 // ─── Create Notebook Dialog ───────────────────────────────────────────────────
 function CreateNotebookDialog({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: number) => void }) {
@@ -265,6 +396,9 @@ export default function StoryStudio() {
             </Card>
           ))}
         </div>
+
+        {/* Viral Score Leaderboard */}
+        <ViralScoreLeaderboard />
 
         {/* Notebooks grid */}
         <div className="flex items-center justify-between mb-4">

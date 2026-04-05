@@ -515,6 +515,43 @@ export const storyRouter = router({
         await deleteStorySource(input.id);
         return { success: true };
       }),
+
+    // Top viral sources across all user's notebooks
+    topViral: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(20).default(5) }))
+      .query(async ({ ctx, input }) => {
+        const { getDb } = await import("../db");
+        const db = await getDb();
+        if (!db) return [];
+        const { storySources, storyNotebooks } = await import("../../drizzle/schema");
+        const { eq, desc, isNotNull, and } = await import("drizzle-orm");
+        // Join sources with notebooks to filter by userId and get notebook title
+        const rows = await db
+          .select({
+            id: storySources.id,
+            notebookId: storySources.notebookId,
+            notebookTitle: storyNotebooks.title,
+            type: storySources.type,
+            url: storySources.url,
+            content: storySources.content,
+            title: storySources.title,
+            summary: storySources.summary,
+            viralScore: storySources.viralScore,
+            hookPatterns: storySources.hookPatterns,
+            status: storySources.status,
+            createdAt: storySources.createdAt,
+          })
+          .from(storySources)
+          .innerJoin(storyNotebooks, eq(storySources.notebookId, storyNotebooks.id))
+          .where(and(
+            eq(storyNotebooks.userId, ctx.user.id),
+            isNotNull(storySources.viralScore),
+            eq(storySources.status, "ready"),
+          ))
+          .orderBy(desc(storySources.viralScore))
+          .limit(input.limit);
+        return rows;
+      }),
   }),
 
   // ── Scripts ────────────────────────────────────────────────────────────────
