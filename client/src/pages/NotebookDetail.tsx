@@ -10,14 +10,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { CreditsWidget } from "@/components/CreditsWidget";
+import { ViralScoreGauge, ViralScoreBadge } from "@/components/ViralScoreGauge";
 import {
   ArrowLeft, BookOpen, Globe, Brain, FileText, Sparkles, Trash2,
   Plus, Zap, Target, TrendingUp, Image, Copy, Check, RefreshCw,
-  Youtube, Link2, AlignLeft, ChevronDown, ChevronUp, Download
+  Youtube, Link2, AlignLeft, ChevronDown, ChevronUp, Download,
+  Flame, Star, StarOff, Hash, BarChart2
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Tab = "sources" | "scripts" | "thumbnails";
+type Tab = "sources" | "scripts" | "thumbnails" | "hooks";
 
 // ─── Sources Tab ──────────────────────────────────────────────────────────────
 function SourcesTab({ notebookId }: { notebookId: number }) {
@@ -127,11 +129,9 @@ function SourcesTab({ notebookId }: { notebookId: number }) {
                       {src.type === "text" ? (src.content ?? "").slice(0, 60) + "..." : src.content}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    {src.viralScore && (
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-yellow-600/40 text-yellow-400">
-                        {src.viralScore}/10
-                      </Badge>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {src.viralScore != null && (
+                      <ViralScoreBadge score={src.viralScore} />
                     )}
                     <button
                       onClick={() => setExpanded(isExpanded ? null : src.id)}
@@ -151,6 +151,31 @@ function SourcesTab({ notebookId }: { notebookId: number }) {
 
                 {isExpanded && (
                   <div className="mt-4 space-y-3 border-t border-[oklch(0.18_0.03_230)] pt-3">
+                    {/* Viral Score Gauge */}
+                    {src.viralScore != null && (
+                      <div className="flex items-center gap-4 pb-2">
+                        <ViralScoreGauge score={src.viralScore} size="md" showLabel animated />
+                        <div className="flex-1">
+                          <div className="text-[10px] text-muted-foreground font-mono mb-1">VIRAL POTENCIÁL</div>
+                          <div className="w-full bg-[oklch(0.12_0.02_240)] rounded-full h-1.5">
+                            <div
+                              className="h-1.5 rounded-full transition-all duration-700"
+                              style={{
+                                width: `${src.viralScore}%`,
+                                background: src.viralScore >= 80
+                                  ? "oklch(0.75 0.22 140)"
+                                  : src.viralScore >= 60
+                                  ? "oklch(0.75 0.20 85)"
+                                  : src.viralScore >= 40
+                                  ? "oklch(0.75 0.22 55)"
+                                  : "oklch(0.65 0.22 15)",
+                              }}
+                            />
+                          </div>
+                          <div className="text-[10px] text-muted-foreground mt-1">{src.viralScore}/100 bodů</div>
+                        </div>
+                      </div>
+                    )}
                     {src.summary && (
                       <div>
                         <div className="text-[10px] text-muted-foreground font-mono mb-1">SHRNUTÍ</div>
@@ -540,8 +565,246 @@ function ThumbnailsTab({ notebookId }: { notebookId: number }) {
     </div>
   );
 }
+// ─── Hooks Tab ────────────────────────────────────────────────────────────────────
+const CATEGORY_COLORS: Record<string, string> = {
+  question:    "oklch(0.72 0.19 250)",
+  shock:       "oklch(0.70 0.22 15)",
+  story:       "oklch(0.75 0.20 85)",
+  statistic:   "oklch(0.72 0.19 200)",
+  controversy: "oklch(0.70 0.22 30)",
+  promise:     "oklch(0.75 0.22 140)",
+  curiosity:   "oklch(0.72 0.20 300)",
+  challenge:   "oklch(0.72 0.19 55)",
+};
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+const CATEGORY_LABELS: Record<string, string> = {
+  question:    "Otázka",
+  shock:       "Shock",
+  story:       "Příběh",
+  statistic:   "Statistika",
+  controversy: "Kontroverze",
+  promise:     "Slíb",
+  curiosity:   "Zvědavost",
+  challenge:   "Výzva",
+};
+
+function HooksTab({ notebookId }: { notebookId: number }) {
+  const [filter, setFilter] = useState<string>("all");
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+
+  const { data: hooks, refetch } = trpc.story.hooks.list.useQuery(
+    { notebookId },
+    { enabled: !!notebookId }
+  );
+
+  const extractMutation = trpc.story.hooks.extract.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Extrahováno ${data.extracted} hook šablon`);
+      refetch();
+    },
+    onError: (e: { message: string }) => toast.error(e.message),
+  });
+
+  const toggleFavMutation = trpc.story.hooks.toggleFavorite.useMutation({
+    onSuccess: () => refetch(),
+  });
+
+  const useMutation = trpc.story.hooks.use.useMutation();
+
+  const deleteMutation = trpc.story.hooks.delete.useMutation({
+    onSuccess: () => { toast.success("Hook smazan"); refetch(); },
+  });
+
+  const handleCopy = (hook: { id: number; template: string }) => {
+    navigator.clipboard.writeText(hook.template);
+    setCopiedId(hook.id);
+    useMutation.mutate({ id: hook.id });
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const categories = ["all", ...Array.from(new Set((hooks ?? []).map(h => h.category)))];
+  const filtered = filter === "all" ? (hooks ?? []) : (hooks ?? []).filter(h => h.category === filter);
+  const favorites = filtered.filter(h => h.isFavorite);
+  const rest = filtered.filter(h => !h.isFavorite);
+  const sorted = [...favorites, ...rest];
+
+  return (
+    <div className="space-y-6">
+      {/* Header actions */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Flame className="w-4 h-4 text-orange-400" />
+          <span className="font-display text-sm text-foreground">Hook Template Library</span>
+          {hooks && hooks.length > 0 && (
+            <Badge variant="outline" className="text-[10px] border-orange-600/40 text-orange-400">
+              {hooks.length} šablon
+            </Badge>
+          )}
+        </div>
+        <Button
+          size="sm"
+          className="glow-blue text-xs"
+          onClick={() => extractMutation.mutate({ notebookId })}
+          disabled={extractMutation.isPending}
+        >
+          {extractMutation.isPending
+            ? <><RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />Extrahuji...</>
+            : <><Zap className="w-3.5 h-3.5 mr-1.5" />Extrahovat z Zdrojů</>}
+        </Button>
+      </div>
+
+      {/* Viral Score Comparison — show gauges for all hooks by category */}
+      {hooks && hooks.length > 0 && (
+        <Card className="bg-[oklch(0.10_0.02_240)] border-[oklch(0.22_0.03_230)] p-4">
+          <div className="text-[10px] text-muted-foreground font-mono mb-3 flex items-center gap-1">
+            <BarChart2 className="w-3 h-3" />VIRAL SCORE POROVNÁNÍ
+          </div>
+          <div className="flex flex-wrap gap-4 justify-center">
+            {Object.entries(
+              (hooks ?? []).reduce((acc, h) => {
+                if (!acc[h.category]) acc[h.category] = [];
+                acc[h.category].push(h.viralScore ?? 0);
+                return acc;
+              }, {} as Record<string, number[]>)
+            ).map(([cat, scores]) => {
+              const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+              return (
+                <div key={cat} className="flex flex-col items-center gap-1">
+                  <ViralScoreGauge score={avg} size="sm" showLabel={false} animated />
+                  <span className="text-[9px] font-mono text-muted-foreground">{CATEGORY_LABELS[cat] ?? cat}</span>
+                  <span className="text-[9px] font-mono" style={{ color: CATEGORY_COLORS[cat] ?? "#888" }}>{scores.length}x</span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* Category filter */}
+      {categories.length > 1 && (
+        <div className="flex gap-1.5 flex-wrap">
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              className={`px-2.5 py-1 rounded-full text-[10px] font-mono transition-colors border ${
+                filter === cat
+                  ? "bg-accent/20 border-accent/40 text-accent"
+                  : "bg-[oklch(0.08_0.02_240)] border-[oklch(0.20_0.03_230)] text-muted-foreground hover:text-foreground"
+              }`}
+              style={filter === cat && cat !== "all" ? { borderColor: `${CATEGORY_COLORS[cat]}60`, color: CATEGORY_COLORS[cat] } : {}}
+            >
+              {cat === "all" ? "Vše" : CATEGORY_LABELS[cat] ?? cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {(!hooks || hooks.length === 0) && (
+        <div className="text-center py-12 border border-dashed border-[oklch(0.22_0.03_230)] rounded-xl">
+          <Flame className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground mb-4">Zatím žádné hook šablony</p>
+          <p className="text-xs text-muted-foreground/60 mb-4">Přidej a analyzuj zdroje v záložce Zdroje, pak klikni Extrahovat z Zdrojů</p>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => extractMutation.mutate({ notebookId })}
+            disabled={extractMutation.isPending}
+          >
+            {extractMutation.isPending
+              ? <><RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />Extrahuji...</>
+              : <><Zap className="w-3.5 h-3.5 mr-1.5" />Extrahovat teď</>}
+          </Button>
+        </div>
+      )}
+
+      {/* Hook cards grid */}
+      {sorted.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {sorted.map(hook => {
+            const color = CATEGORY_COLORS[hook.category] ?? "oklch(0.72 0.15 240)";
+            const label = CATEGORY_LABELS[hook.category] ?? hook.category;
+            return (
+              <Card
+                key={hook.id}
+                className="bg-[oklch(0.10_0.02_240)] border p-4 space-y-2 relative"
+                style={{ borderColor: `${color}30` }}
+              >
+                {/* Top row */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[9px] font-mono font-semibold"
+                      style={{ backgroundColor: `${color}20`, color, border: `1px solid ${color}40` }}
+                    >
+                      {label}
+                    </span>
+                    {hook.isFavorite && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ViralScoreBadge score={hook.viralScore ?? 0} />
+                    {hook.usageCount > 0 && (
+                      <span className="text-[9px] font-mono text-muted-foreground flex items-center gap-0.5">
+                        <Hash className="w-2.5 h-2.5" />{hook.usageCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Template */}
+                <div
+                  className="font-mono text-xs text-foreground/90 bg-[oklch(0.07_0.02_240)] rounded-lg p-3 leading-relaxed"
+                  style={{ borderLeft: `3px solid ${color}` }}
+                >
+                  {hook.template}
+                </div>
+
+                {/* Example */}
+                {hook.example && (
+                  <div className="text-[10px] text-muted-foreground italic pl-1">
+                    „{hook.example}“
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-1 pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-2 text-[10px] flex-1"
+                    onClick={() => handleCopy(hook)}
+                  >
+                    {copiedId === hook.id
+                      ? <><Check className="w-3 h-3 mr-1 text-green-400" />Zkopirováno!</>
+                      : <><Copy className="w-3 h-3 mr-1" />Kopírovat</>}
+                  </Button>
+                  <button
+                    onClick={() => toggleFavMutation.mutate({ id: hook.id })}
+                    className="p-1.5 rounded-md hover:bg-[oklch(0.15_0.03_240)] text-muted-foreground hover:text-yellow-400 transition-colors"
+                    title={hook.isFavorite ? "Odebrat z oblíbených" : "Přidat do oblíbených"}
+                  >
+                    {hook.isFavorite
+                      ? <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+                      : <StarOff className="w-3.5 h-3.5" />}
+                  </button>
+                  <button
+                    onClick={() => deleteMutation.mutate({ id: hook.id })}
+                    className="p-1.5 rounded-md hover:bg-[oklch(0.15_0.03_240)] text-muted-foreground hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────────
 export default function NotebookDetail() {
   const { id } = useParams<{ id: string }>();
   const notebookId = parseInt(id ?? "0");
@@ -565,6 +828,7 @@ export default function NotebookDetail() {
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "sources", label: "Zdroje", icon: <Globe className="w-3.5 h-3.5" /> },
+    { id: "hooks", label: "Hook Library", icon: <Flame className="w-3.5 h-3.5" /> },
     { id: "scripts", label: "Skripty + SEO", icon: <FileText className="w-3.5 h-3.5" /> },
     { id: "thumbnails", label: "Thumbnaily", icon: <Image className="w-3.5 h-3.5" /> },
   ];
@@ -707,6 +971,7 @@ export default function NotebookDetail() {
 
         {/* Tab content */}
         {activeTab === "sources" && <SourcesTab notebookId={notebookId} />}
+        {activeTab === "hooks" && <HooksTab notebookId={notebookId} />}
         {activeTab === "scripts" && <ScriptsTab notebookId={notebookId} />}
         {activeTab === "thumbnails" && <ThumbnailsTab notebookId={notebookId} />}
       </div>

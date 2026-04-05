@@ -29,6 +29,13 @@
       "when": 1775107265838,
       "tag": "0003_lying_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1775122310515,
+      "tag": "0004_familiar_roland_deschain",
+      "breakpoints": true
     }
   ]
 }

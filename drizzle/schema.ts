@@ -297,3 +297,30 @@ export const storyThumbnails = mysqlTable("story_thumbnails", {
 
 export type StoryThumbnail = typeof storyThumbnails.$inferSelect;
 export type InsertStoryThumbnail = typeof storyThumbnails.$inferInsert;
+
+// ─── Hook Templates Library ─────────────────────────────────────────────────────
+export const hookTemplates = mysqlTable("hook_templates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  notebookId: int("notebookId"),        // null = global library
+  sourceId: int("sourceId"),            // extracted from which source
+  category: mysqlEnum("category", [
+    "question",
+    "shock",
+    "story",
+    "statistic",
+    "controversy",
+    "promise",
+    "curiosity",
+    "challenge",
+  ]).notNull(),
+  template: text("template").notNull(),  // e.g. "Did you know that {X}?"
+  example: text("example"),             // real example from source
+  viralScore: float("viralScore"),       // 0-100
+  usageCount: int("usageCount").default(0).notNull(),
+  isFavorite: boolean("isFavorite").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type HookTemplate = typeof hookTemplates.$inferSelect;
+export type InsertHookTemplate = typeof hookTemplates.$inferInsert;
+

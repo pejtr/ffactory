@@ -163,7 +163,7 @@ export async function deleteCharacter(id: number): Promise<void> {
 }
 
 // ─── Credits ───────────────────────────────────────────────────────────────────
-import { creditTransactions, generations, storyNotebooks, storySources, storyScripts, storyThumbnails } from "../drizzle/schema";
+import { creditTransactions, generations, storyNotebooks, storySources, storyScripts, storyThumbnails, hookTemplates } from "../drizzle/schema";
 import { sum } from "drizzle-orm";
 
 export const CREDIT_COSTS = {
@@ -349,4 +349,58 @@ export async function setSelectedThumbnail(scriptId: number, thumbnailId: number
   // Deselect all, then select the chosen one
   await db.update(storyThumbnails).set({ isSelected: false }).where(eq(storyThumbnails.scriptId, scriptId));
   await db.update(storyThumbnails).set({ isSelected: true }).where(eq(storyThumbnails.id, thumbnailId));
+}
+
+// ─── Hook Templates ─────────────────────────────────────────────────────────────
+export async function createHookTemplate(data: typeof hookTemplates.$inferInsert) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(hookTemplates).values(data).$returningId();
+  return result[0]?.id;
+}
+
+export async function getNotebookHooks(notebookId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(hookTemplates)
+    .where(eq(hookTemplates.notebookId, notebookId))
+    .orderBy(desc(hookTemplates.viralScore), desc(hookTemplates.usageCount));
+}
+
+export async function getUserHooks(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(hookTemplates)
+    .where(eq(hookTemplates.userId, userId))
+    .orderBy(desc(hookTemplates.viralScore), desc(hookTemplates.usageCount));
+}
+
+export async function toggleHookFavorite(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const result = await db.select({ isFavorite: hookTemplates.isFavorite })
+    .from(hookTemplates).where(eq(hookTemplates.id, id)).limit(1);
+  const current = result[0]?.isFavorite ?? false;
+  await db.update(hookTemplates).set({ isFavorite: !current }).where(eq(hookTemplates.id, id));
+  return !current;
+}
+
+export async function incrementHookUsage(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Use raw SQL for increment
+  await db.update(hookTemplates)
+    .set({ usageCount: 999 }) // placeholder — will be overridden below
+    .where(eq(hookTemplates.id, id));
+  // Get current count and increment
+  const result = await db.select({ usageCount: hookTemplates.usageCount })
+    .from(hookTemplates).where(eq(hookTemplates.id, id)).limit(1);
+  const count = (result[0]?.usageCount ?? 0) + 1;
+  await db.update(hookTemplates).set({ usageCount: count }).where(eq(hookTemplates.id, id));
+}
+
+export async function deleteHookTemplate(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(hookTemplates).where(eq(hookTemplates.id, id));
 }

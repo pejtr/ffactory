@@ -9,6 +9,7 @@ import {
   createStorySource, getNotebookSources, updateStorySource, deleteStorySource,
   createStoryScript, getStoryScript, getNotebookScripts, updateStoryScript, deleteStoryScript,
   createStoryThumbnail, getScriptThumbnails, setSelectedThumbnail,
+  createHookTemplate, getNotebookHooks, getUserHooks, toggleHookFavorite, incrementHookUsage, deleteHookTemplate,
   spendCredits, CREDIT_COSTS,
 } from "../db";
 
@@ -710,6 +711,129 @@ Return JSON with:
         });
 
         return seo;
+      }),
+  }),
+
+  // ─── Hooks Router ──────────────────────────────────────────────────────────────
+  hooks: router({
+    // List all hooks for a notebook
+    list: protectedProcedure
+      .input(z.object({ notebookId: z.number() }))
+      .query(async ({ input, ctx }) => {
+        return getNotebookHooks(input.notebookId, ctx.user.id);
+      }),
+
+    // Extract hooks from all analyzed sources in a notebook using AI
+    extract: protectedProcedure
+      .input(z.object({ notebookId: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const notebook = await getStoryNotebook(input.notebookId);
+        if (!notebook || notebook.userId !== ctx.user.id) throw new Error("Notebook not found");
+
+        const sources = await getNotebookSources(input.notebookId);
+        const readySources = sources.filter(s => s.status === "ready" && s.hookPatterns);
+
+        if (readySources.length === 0) return { extracted: 0 };
+
+        // Collect all raw hook patterns from sources
+        const allRawHooks = readySources.flatMap(src => {
+          const patterns = src.hookPatterns as { pattern: string; example: string; type: string }[] ?? [];
+          return patterns.map(p => ({ ...p, sourceId: src.id, viralScore: src.viralScore }));
+        });
+
+        if (allRawHooks.length === 0) return { extracted: 0 };
+
+        // Use AI to categorize and templatize hooks
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are an expert in viral content hooks. Categorize and templatize the provided hooks into reusable templates. Always respond with valid JSON." },
+            { role: "user", content: `Analyze these ${allRawHooks.length} hook patterns and create reusable templates.
+
+Hooks: ${JSON.stringify(allRawHooks.slice(0, 30))}
+
+For each unique hook pattern, create a template with:
+- category: one of: question, shock, story, statistic, controversy, promise, curiosity, challenge
+- template: reusable template with {X} placeholders (e.g. "Did you know that {X} can {Y}?")
+- example: best real example from the hooks
+- viralScore: 0-100 estimate
+
+Return JSON: { templates: Array<{category, template, example, viralScore}> }` },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "hook_templates_output",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  templates: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        category: { type: "string" },
+                        template: { type: "string" },
+                        example: { type: "string" },
+                        viralScore: { type: "number" },
+                      },
+                      required: ["category", "template", "example", "viralScore"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["templates"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+
+        const content = String(response.choices?.[0]?.message?.content ?? '{"templates":[]}');
+        const { templates } = JSON.parse(content) as { templates: { category: string; template: string; example: string; viralScore: number }[] };
+
+        const VALID_CATEGORIES = ["question", "shock", "story", "statistic", "controversy", "promise", "curiosity", "challenge"] as const;
+        let extracted = 0;
+        for (const t of templates.slice(0, 20)) {
+          const cat = VALID_CATEGORIES.includes(t.category as typeof VALID_CATEGORIES[number])
+            ? (t.category as typeof VALID_CATEGORIES[number])
+            : "curiosity" as const;
+          await createHookTemplate({
+            userId: ctx.user.id,
+            notebookId: input.notebookId,
+            category: cat,
+            template: t.template,
+            example: t.example,
+            viralScore: Math.min(100, Math.max(0, t.viralScore)),
+          });
+          extracted++;
+        }
+
+        return { extracted };
+      }),
+
+    // Toggle favorite status
+    toggleFavorite: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await toggleHookFavorite(input.id, ctx.user.id);
+        return { isFavorite: result };
+      }),
+
+    // Increment usage count when hook is used in a script
+    use: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await incrementHookUsage(input.id);
+        return { ok: true };
+      }),
+
+    // Delete hook template
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await deleteHookTemplate(input.id, ctx.user.id);
+        return { ok: true };
       }),
   }),
 });

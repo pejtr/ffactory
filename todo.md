@@ -99,3 +99,12 @@
 - [ ] Foto galerie s možností mazání jednotlivých fotek
 - [ ] Soul ID generátor kombinuje všechny referenční fotky / character sheet pro maximální konzistenci
 - [ ] Tip v UI: doporučení nahrát character sheet pro nejlepší výsledky
+
+## Viral Score Widget + Hook Template Library (v2.5)
+- [ ] Backend: story.sources.analyze vrací viralScore (0-10) + hookPatterns pole
+- [ ] Backend: story.hooks.list + story.hooks.useInScript procedury
+- [ ] DB: hook_templates tabulka (category, template, example, viralScore)
+- [ ] Frontend: ViralScoreGauge SVG komponenta (kruhový gauge s animací)
+- [ ] Frontend: Sources Manager - viral score badge + gauge pro každý zdroj
+- [ ] Frontend: Hook Template Library panel v NotebookDetail (filtry, kategorie, copy-to-script)
+- [ ] Frontend: Channel comparison view - porovnání viral score napříč zdroji
