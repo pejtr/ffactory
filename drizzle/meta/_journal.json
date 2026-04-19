@@ -43,6 +43,13 @@
       "when": 1776569500637,
       "tag": "0005_keen_carmella_unuscione",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1776596562559,
+      "tag": "0006_lyrical_zaladane",
+      "breakpoints": true
     }
   ]
 }

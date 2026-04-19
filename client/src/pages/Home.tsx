@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getLoginUrl } from "@/const";
 import { Link } from "wouter";
-import { Film, Zap, Music, Users, Star, ChevronRight, Cpu, Layers, Mic, Video, Wand2, Globe, BookOpen } from "lucide-react";
+import { Film, Zap, Music, Users, Star, ChevronRight, Cpu, Layers, Mic, Video, Wand2, Globe, BookOpen, Trophy } from "lucide-react";
 
 const MODELS = [
   { name: "Kling 3.0 Omni", type: "Dialogue + Audio", color: "text-blue-400", icon: "mic" },
@@ -40,6 +40,7 @@ export default function Home() {
               <>
                 <Link href="/characters"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><Users className="w-4 h-4 mr-2" />Characters</Button></Link>
                 <Link href="/templates"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><BookOpen className="w-4 h-4 mr-2" />Templates</Button></Link>
+                <Link href="/achievements"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><Trophy className="w-4 h-4 mr-2" />Achievements</Button></Link>
                 <Link href="/studio"><Button size="sm" className="glow-blue font-display text-xs tracking-wider">OPEN STUDIO <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
               </>
             ) : (

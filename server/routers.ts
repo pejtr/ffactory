@@ -25,11 +25,13 @@ import { generateImage } from "./_core/imageGeneration";
 import { invokeLLM } from "./_core/llm";
 import { storyRouter } from "./routers/story";
 import { templatesRouter } from "./routers/templates";
+import { gamificationRouter } from "./routers/gamification";
 
 export const appRouter = router({
   system: systemRouter,
   story: storyRouter,
   scriptTemplates: templatesRouter,
+  gamification: gamificationRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

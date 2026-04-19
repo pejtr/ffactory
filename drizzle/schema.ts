@@ -368,3 +368,28 @@ export const personas = mysqlTable("personas", {
 export type Persona = typeof personas.$inferSelect;
 export type InsertPersona = typeof personas.$inferInsert;
 
+// ── Gamification: User Streaks ─────────────────────────────────────────────────
+export const userStreaks = mysqlTable("user_streaks", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull().unique(),
+  currentStreak: int("currentStreak").notNull().default(0),
+  longestStreak: int("longestStreak").notNull().default(0),
+  lastClaimedAt: timestamp("lastClaimedAt"),
+  streakFreezeUsed: boolean("streakFreezeUsed").default(false).notNull(),
+  totalDaysClaimed: int("totalDaysClaimed").notNull().default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserStreak = typeof userStreaks.$inferSelect;
+export type InsertUserStreak = typeof userStreaks.$inferInsert;
+
+// ── Gamification: User Achievements ───────────────────────────────────────────
+export const userAchievements = mysqlTable("user_achievements", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
+  achievementKey: varchar("achievementKey", { length: 128 }).notNull(),
+  unlockedAt: timestamp("unlockedAt").defaultNow().notNull(),
+  creditReward: int("creditReward").notNull().default(0),
+  notified: boolean("notified").default(false).notNull(),
+});
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;

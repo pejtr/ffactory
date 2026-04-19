@@ -14,6 +14,8 @@ import NotebookDetail from "./pages/NotebookDetail";
 import Credits from "./pages/Credits";
 import GenerateHub from "./pages/GenerateHub";
 import ScriptTemplates from "./pages/ScriptTemplates";
+import GamificationDashboard from "./pages/GamificationDashboard";
+import DailyBonusChecker from "./components/DailyBonusChecker";
 
 function Router() {
   return (
@@ -28,6 +30,7 @@ function Router() {
       <Route path="/credits" component={Credits} />
       <Route path="/generate" component={GenerateHub} />
       <Route path="/templates" component={ScriptTemplates} />
+      <Route path="/achievements" component={GamificationDashboard} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -55,6 +58,7 @@ function App() {
             }}
           />
           <div className="scan-line" />
+          <DailyBonusChecker />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
