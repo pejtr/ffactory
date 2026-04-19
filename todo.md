@@ -109,6 +109,18 @@
 - [ ] Frontend: Hook Template Library panel v NotebookDetail (filtry, kategorie, copy-to-script)
 - [ ] Frontend: Channel comparison view - porovnání viral score napříč zdroji
 
+## Referral System (v3.0)
+- [x] DB: add referral_code column to users table + create referrals table
+- [x] DB: run migration 0007
+- [x] Backend: referral router (getMyCode, getStats, applyCode)
+- [x] Backend: register referral router in routers.ts
+- [x] Backend: REFERRAL_REWARD constant (50 credits) in db.ts
+- [x] Frontend: /referral page (link display, copy/share, stats, how-it-works)
+- [x] Frontend: route + nav link "Pozvat přátele" in Home.tsx
+- [x] OAuth: auto-apply referral code from URL param on new user registration
+- [x] Tests: referral.test.ts
+- [x] TypeScript: 0 errors check
+
 ## Cynema AI Features + Script Templates (v3.0)
 - [ ] Scene-Based Editor — edit individual scenes after generation (prompt, model, duration, camera)
 - [ ] Multi-format Export presets — 16:9 YouTube, 9:16 TikTok/Shorts, 1:1 Instagram

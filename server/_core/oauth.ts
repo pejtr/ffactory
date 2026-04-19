@@ -1,8 +1,12 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
+import { getDb } from "../db";
+import { users, referrals, creditTransactions } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
+import { REFERRAL_REWARD, REFERRAL_SIGNUP_BONUS } from "../routers/referral";
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -28,6 +32,8 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      const isNewUser = !(await db.getUserByOpenId(userInfo.openId));
+
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
@@ -35,6 +41,55 @@ export function registerOAuthRoutes(app: Express) {
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: new Date(),
       });
+
+      // Auto-apply referral code for new users if ?ref= param is in state
+      if (isNewUser) {
+        try {
+          // The referral code is passed as a query param ?ref= on the callback URL
+          // Frontend stores it in sessionStorage and passes it via the redirect URI
+          const refCode = getQueryParam(req, "ref");
+          if (refCode) {
+            const dbConn = await getDb();
+            if (dbConn) {
+              const newUser = await db.getUserByOpenId(userInfo.openId);
+              const [referrer] = await dbConn.select({ id: users.id })
+                .from(users)
+                .where(eq(users.referralCode, String(refCode).toUpperCase()))
+                .limit(1);
+              if (referrer && newUser && referrer.id !== newUser.id) {
+                const alreadyUsed = await dbConn.select({ id: referrals.id })
+                  .from(referrals).where(eq(referrals.referredId, newUser.id)).limit(1);
+                if (alreadyUsed.length === 0) {
+                  await dbConn.insert(referrals).values({
+                    referrerId: referrer.id,
+                    referredId: newUser.id,
+                    code: String(refCode).toUpperCase(),
+                    status: "completed",
+                    creditsAwarded: REFERRAL_REWARD,
+                  });
+                  await dbConn.insert(creditTransactions).values({
+                    userId: referrer.id,
+                    amount: REFERRAL_REWARD,
+                    type: "referral_bonus",
+                    description: `Pozvánka přijata — nový uživatel se zaregistroval přes tvůj odkaz`,
+                    referenceId: String(newUser.id),
+                  });
+                  await dbConn.insert(creditTransactions).values({
+                    userId: newUser.id,
+                    amount: REFERRAL_SIGNUP_BONUS,
+                    type: "referral_signup",
+                    description: `Bonus za registraci přes referral odkaz`,
+                    referenceId: String(referrer.id),
+                  });
+                  console.log(`[Referral] Applied code ${refCode}: referrer=${referrer.id}, new user=${newUser.id}`);
+                }
+              }
+            }
+          }
+        } catch (refErr) {
+          console.warn("[Referral] Failed to apply referral code:", refErr);
+        }
+      }
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
         name: userInfo.name || "",

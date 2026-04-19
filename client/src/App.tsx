@@ -15,6 +15,7 @@ import Credits from "./pages/Credits";
 import GenerateHub from "./pages/GenerateHub";
 import ScriptTemplates from "./pages/ScriptTemplates";
 import GamificationDashboard from "./pages/GamificationDashboard";
+import Referral from "./pages/Referral";
 import DailyBonusChecker from "./components/DailyBonusChecker";
 
 function Router() {
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/generate" component={GenerateHub} />
       <Route path="/templates" component={ScriptTemplates} />
       <Route path="/achievements" component={GamificationDashboard} />
+      <Route path="/referral" component={Referral} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

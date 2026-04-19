@@ -18,6 +18,7 @@ export const users = mysqlTable("users", {
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  referralCode: varchar("referralCode", { length: 16 }).unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -160,6 +161,8 @@ export const creditTransactions = mysqlTable("credit_transactions", {
     "story_video",
     "story_thumbnail",
     "refund",
+    "referral_bonus",
+    "referral_signup",
   ]).notNull(),
   description: text("description"),
   referenceId: varchar("referenceId", { length: 128 }),
@@ -368,7 +371,20 @@ export const personas = mysqlTable("personas", {
 export type Persona = typeof personas.$inferSelect;
 export type InsertPersona = typeof personas.$inferInsert;
 
-// ── Gamification: User Streaks ─────────────────────────────────────────────────
+// ─── Referrals ────────────────────────────────────────────────────────────────
+export const referrals = mysqlTable("referrals", {
+  id: int("id").primaryKey().autoincrement(),
+  referrerId: int("referrerId").notNull(),   // user who shared the code
+  referredId: int("referredId").notNull(),   // new user who used the code
+  code: varchar("code", { length: 16 }).notNull(),
+  status: mysqlEnum("status", ["pending", "completed"]).default("completed").notNull(),
+  creditsAwarded: int("creditsAwarded").notNull().default(50),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = typeof referrals.$inferInsert;
+
+// ─── Gamification: User Streaks ─────────────────────────────────────────────────
 export const userStreaks = mysqlTable("user_streaks", {
   id: int("id").primaryKey().autoincrement(),
   userId: int("userId").notNull().unique(),
