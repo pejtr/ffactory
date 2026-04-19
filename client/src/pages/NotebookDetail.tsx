@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -226,11 +226,20 @@ function SourcesTab({ notebookId }: { notebookId: number }) {
 }
 
 // ─── Scripts Tab ──────────────────────────────────────────────────────────────
-function ScriptsTab({ notebookId }: { notebookId: number }) {
+function ScriptsTab({ notebookId, prefilledHook, onHookUsed }: { notebookId: number; prefilledHook?: string; onHookUsed?: () => void }) {
   const [topic, setTopic] = useState("");
   const [duration, setDuration] = useState("300");
   const [selectedScript, setSelectedScript] = useState<number | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [hookOverride, setHookOverride] = useState<string>("");
+
+  // Apply prefilled hook when it changes
+  useEffect(() => {
+    if (prefilledHook) {
+      setHookOverride(prefilledHook);
+      onHookUsed?.();
+    }
+  }, [prefilledHook]);
 
   const { data: scripts, refetch } = trpc.story.scripts.list.useQuery({ notebookId });
 
@@ -273,6 +282,16 @@ function ScriptsTab({ notebookId }: { notebookId: number }) {
                 className="bg-[oklch(0.08_0.02_240)] border-[oklch(0.22_0.03_230)] text-sm"
               />
             </div>
+            {/* Hook override — prefilled from Hook Library */}
+            {hookOverride && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-2.5">
+                <div className="text-[9px] font-mono text-yellow-400 mb-1 flex items-center gap-1">
+                  <Zap className="w-2.5 h-2.5" />HOOK Z KNIHOVNY
+                </div>
+                <p className="text-xs text-yellow-300 leading-relaxed">{hookOverride}</p>
+                <button onClick={() => setHookOverride("")} className="text-[9px] text-muted-foreground hover:text-red-400 mt-1">× Odebrat</button>
+              </div>
+            )}
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Délka videa</label>
               <Select value={duration} onValueChange={setDuration}>
@@ -289,7 +308,7 @@ function ScriptsTab({ notebookId }: { notebookId: number }) {
               </Select>
             </div>
             <Button
-              onClick={() => generateMutation.mutate({ notebookId, title: topic, idea: topic, targetDurationSec: parseInt(duration) })}
+              onClick={() => generateMutation.mutate({ notebookId, title: topic, idea: hookOverride ? `${topic}\n\nPoužij tento hook jako úvod: ${hookOverride}` : topic, targetDurationSec: parseInt(duration) })}
               disabled={!topic.trim() || generateMutation.isPending}
               className="glow-blue w-full"
               size="sm"
@@ -588,7 +607,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   challenge:   "Výzva",
 };
 
-function HooksTab({ notebookId }: { notebookId: number }) {
+function HooksTab({ notebookId, onApplyHook }: { notebookId: number; onApplyHook?: (hookText: string) => void }) {
   const [filter, setFilter] = useState<string>("all");
   const [copiedId, setCopiedId] = useState<number | null>(null);
 
@@ -769,6 +788,15 @@ function HooksTab({ notebookId }: { notebookId: number }) {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 pt-1">
+                  {onApplyHook && (
+                    <Button
+                      size="sm"
+                      className="h-6 px-2 text-[10px] flex-1 bg-yellow-600/20 hover:bg-yellow-600/30 border border-yellow-600/40 text-yellow-300"
+                      onClick={() => { onApplyHook(hook.template); useMutation.mutate({ id: hook.id }); toast.success("Hook přidán do skriptu → přejdi na záložku Skripty"); }}
+                    >
+                      <Zap className="w-3 h-3 mr-1" />Použít v skriptu
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -810,6 +838,12 @@ export default function NotebookDetail() {
   const notebookId = parseInt(id ?? "0");
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("sources");
+  const [pendingHook, setPendingHook] = useState<string | undefined>(undefined);
+
+  const handleApplyHook = (hookText: string) => {
+    setPendingHook(hookText);
+    setActiveTab("scripts");
+  };
 
   const { data: notebook, isLoading } = trpc.story.notebooks.get.useQuery(
     { id: notebookId },
@@ -971,8 +1005,8 @@ export default function NotebookDetail() {
 
         {/* Tab content */}
         {activeTab === "sources" && <SourcesTab notebookId={notebookId} />}
-        {activeTab === "hooks" && <HooksTab notebookId={notebookId} />}
-        {activeTab === "scripts" && <ScriptsTab notebookId={notebookId} />}
+        {activeTab === "hooks" && <HooksTab notebookId={notebookId} onApplyHook={handleApplyHook} />}
+        {activeTab === "scripts" && <ScriptsTab notebookId={notebookId} prefilledHook={pendingHook} onHookUsed={() => setPendingHook(undefined)} />}
         {activeTab === "thumbnails" && <ThumbnailsTab notebookId={notebookId} />}
       </div>
     </div>

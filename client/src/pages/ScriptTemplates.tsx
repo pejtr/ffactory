@@ -12,10 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import {
-  Film, User, Sparkles, Copy, Play, ChevronRight, Plus, Trash2,
-  Camera, Clock, Mic, Zap, BookOpen, ArrowLeft, Download, Eye
+import { Film, User, Sparkles, Copy, Play, ChevronRight, Plus, Trash2,
+  Camera, Clock, Mic, Zap, BookOpen, ArrowLeft, Download, Eye, Video
 } from "lucide-react";
+import { useLocation } from "wouter";
 
 // ── Camera motion labels ──────────────────────────────────────────────────────
 const CAMERA_LABELS: Record<string, string> = {
@@ -236,9 +236,84 @@ function CreatePersonaDialog({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// ── Import from Characters Button ────────────────────────────────────────────────────────────────────────────────────
+function ImportFromCharactersButton({ onImported }: { onImported: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [importing, setImporting] = useState<number | null>(null);
+  const { data: characters } = trpc.characters.list.useQuery();
+  const createPersonaMutation = trpc.scriptTemplates.personas.create.useMutation();
+
+  const handleImport = async (char: any) => {
+    setImporting(char.id);
+    try {
+      await createPersonaMutation.mutateAsync({
+        name: char.name,
+        role: "hero",
+        personality: char.personality || char.description || "",
+        appearance: char.description || "",
+        voiceStyle: char.voiceName || "",
+        characterId: char.id,
+      });
+      toast.success(`Postava "${char.name}" importována jako persona`);
+      onImported();
+    } catch (e: any) {
+      toast.error(e.message || "Chyba při importu");
+    } finally {
+      setImporting(null);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline" className="border-cyan-500/30 text-cyan-300 hover:text-cyan-200 hover:border-cyan-400/50">
+          <ChevronRight className="w-4 h-4 mr-1" /> Import z Archivu postav
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-[#0d1117] border-white/10 text-white max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="w-5 h-5 text-cyan-400" /> Importovat postavu jako personu
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 max-h-80 overflow-y-auto">
+          {!characters || characters.length === 0 ? (
+            <div className="text-center py-8 text-white/30">
+              <p>Archiv postav je prázdný</p>
+              <p className="text-xs mt-1">Nejprve vytvoř postavy v sekci Characters</p>
+            </div>
+          ) : (
+            characters.map((char: any) => (
+              <div key={char.id} className="flex items-center gap-3 p-3 rounded-lg border border-white/10 bg-white/5 hover:border-white/20 transition-all">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500/30 to-purple-500/30 flex items-center justify-center text-sm font-bold text-white/80 flex-shrink-0">
+                  {char.name[0]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-white text-sm">{char.name}</div>
+                  {char.soulId && <div className="text-xs text-cyan-400/70">Soul ID: {char.soulId.slice(0, 12)}...</div>}
+                  {char.description && <div className="text-xs text-white/40 truncate">{char.description}</div>}
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => handleImport(char)}
+                  disabled={importing === char.id}
+                  className="bg-cyan-600 hover:bg-cyan-500 flex-shrink-0"
+                >
+                  {importing === char.id ? "..." : "Importovat"}
+                </Button>
+              </div>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────────────────────────────
 export default function ScriptTemplates() {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState<"builtin" | "library" | "personas">("builtin");
   const [personaBindings, setPersonaBindings] = useState<Record<string, number>>({});
   const [variableValues, setVariableValues] = useState<Record<string, string>>({});
@@ -302,6 +377,23 @@ export default function ScriptTemplates() {
     }
   };
 
+  const handleCreateVideo = () => {
+    const scenes = filledScenes || builtIn?.scenes || [];
+    const title = builtIn?.title || "Šablona";
+    const idea = scenes.map((s: any, i: number) =>
+      `Scéna ${i + 1}: ${s.title}. ${s.action || ""}`
+    ).join(" ");
+    sessionStorage.setItem("studio_prefill", JSON.stringify({
+      idea,
+      title,
+      scenes,
+      genre: builtIn?.genre || "horror",
+      fromTemplate: true,
+    }));
+    navigate("/studio");
+    toast.success("Přenášení scén do Studia...");
+  };
+
   const copyScenesToClipboard = () => {
     const scenes = filledScenes || builtIn?.scenes || [];
     const text = scenes.map((s: any, i: number) => [
@@ -346,6 +438,13 @@ export default function ScriptTemplates() {
               className="border-white/20 text-white/70 hover:text-white"
             >
               <Copy className="w-4 h-4 mr-1" /> Kopírovat scénář
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleCreateVideo}
+              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500"
+            >
+              <Video className="w-4 h-4 mr-1" /> Vytvořit video ze šablony
             </Button>
             <Button
               size="sm"
@@ -560,14 +659,17 @@ export default function ScriptTemplates() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-white font-semibold">Persony</h3>
-                <CreatePersonaDialog onCreated={refetchPersonas} />
+                <div className="flex items-center gap-2">
+                  <ImportFromCharactersButton onImported={refetchPersonas} />
+                  <CreatePersonaDialog onCreated={refetchPersonas} />
+                </div>
               </div>
 
               {!personas || personas.length === 0 ? (
                 <div className="text-center py-16 text-white/30">
                   <User className="w-12 h-12 mx-auto mb-4 opacity-30" />
                   <p className="text-lg mb-2">Žádné persony</p>
-                  <p className="text-sm">Vytvoř persony pro dosazení do šablon</p>
+                  <p className="text-sm">Vytvoř persony nebo importuj z Archivu postav</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -598,6 +700,7 @@ export default function ScriptTemplates() {
                               {p.role && <Badge className="bg-white/10 text-white/60 border-white/20 text-xs">{p.role}</Badge>}
                               {p.gender && <Badge className="bg-white/10 text-white/60 border-white/20 text-xs">{p.gender}</Badge>}
                               {p.age && <Badge className="bg-white/10 text-white/60 border-white/20 text-xs">{p.age}</Badge>}
+                              {p.characterId && <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30 text-xs">Soul</Badge>}
                             </div>
                           </div>
                         </div>

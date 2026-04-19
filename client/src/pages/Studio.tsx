@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -147,6 +147,21 @@ export default function Studio() {
 
   const previewMutation = trpc.video.preview.useMutation();
   const createMutation = trpc.video.create.useMutation();
+
+  // Prefill from Script Templates (Template → Studio pipeline)
+  useEffect(() => {
+    const prefill = sessionStorage.getItem("studio_prefill");
+    if (prefill) {
+      try {
+        const data = JSON.parse(prefill);
+        if (data.idea) setIdea(data.idea);
+        if (data.genre) setGenre(data.genre);
+        if (data.emotion) setEmotion(data.emotion);
+        sessionStorage.removeItem("studio_prefill");
+        toast.success("Šablona přenesena do Studia");
+      } catch {}
+    }
+  }, []);
 
   const steps = ["Nápad", "Styl", "Scénář", "Vytvořit"];
 
