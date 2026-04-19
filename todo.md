@@ -108,3 +108,13 @@
 - [ ] Frontend: Sources Manager - viral score badge + gauge pro každý zdroj
 - [ ] Frontend: Hook Template Library panel v NotebookDetail (filtry, kategorie, copy-to-script)
 - [ ] Frontend: Channel comparison view - porovnání viral score napříč zdroji
+
+## Cynema AI Features + Script Templates (v3.0)
+- [ ] Scene-Based Editor — edit individual scenes after generation (prompt, model, duration, camera)
+- [ ] Multi-format Export presets — 16:9 YouTube, 9:16 TikTok/Shorts, 1:1 Instagram
+- [ ] Camera Motion presets — dolly, pan, tilt, orbit, FPV drone, handheld
+- [ ] AI Sound Design — auto-select music + SFX based on scene mood
+- [ ] Script Templates page — parametric templates with persona slots
+- [ ] "The Trap & Switch" template — 6-scene horror micro-short with Character A/B slots
+- [ ] Template Library — genre-based templates (horror, sci-fi, drama, comedy, educational)
+- [ ] Persona Manager — save reusable character personas for quick template filling

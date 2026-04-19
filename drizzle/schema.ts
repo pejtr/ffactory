@@ -8,6 +8,7 @@ import {
   json,
   boolean,
   float,
+  tinyint,
 } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
@@ -323,4 +324,47 @@ export const hookTemplates = mysqlTable("hook_templates", {
 });
 export type HookTemplate = typeof hookTemplates.$inferSelect;
 export type InsertHookTemplate = typeof hookTemplates.$inferInsert;
+
+// ── Script Templates ───────────────────────────────────────────────────────────
+export const scriptTemplates = mysqlTable("script_templates", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  genre: varchar("genre", { length: 100 }).notNull().default("horror"),
+  format: varchar("format", { length: 50 }).notNull().default("shorts"),
+  description: text("description"),
+  scenes: json("scenes"),
+  personaSlots: json("persona_slots"),
+  variables: json("variables"),
+  isPublic: tinyint("is_public").notNull().default(0),
+  usageCount: int("usage_count").notNull().default(0),
+  viralScore: float("viral_score"),
+  tags: varchar("tags", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type ScriptTemplate = typeof scriptTemplates.$inferSelect;
+export type InsertScriptTemplate = typeof scriptTemplates.$inferInsert;
+
+// ── Personas ───────────────────────────────────────────────────────────────────
+export const personas = mysqlTable("personas", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  role: varchar("role", { length: 100 }),
+  gender: varchar("gender", { length: 50 }),
+  age: varchar("age", { length: 50 }),
+  appearance: text("appearance"),
+  personality: text("personality"),
+  voiceStyle: varchar("voice_style", { length: 100 }),
+  catchphrase: varchar("catchphrase", { length: 500 }),
+  backstory: text("backstory"),
+  avatarUrl: varchar("avatar_url", { length: 1000 }),
+  characterId: int("character_id"),
+  tags: varchar("tags", { length: 500 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type Persona = typeof personas.$inferSelect;
+export type InsertPersona = typeof personas.$inferInsert;
 

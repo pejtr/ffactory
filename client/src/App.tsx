@@ -13,6 +13,7 @@ import StoryStudio from "./pages/StoryStudio";
 import NotebookDetail from "./pages/NotebookDetail";
 import Credits from "./pages/Credits";
 import GenerateHub from "./pages/GenerateHub";
+import ScriptTemplates from "./pages/ScriptTemplates";
 
 function Router() {
   return (
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/story/:id" component={NotebookDetail} />
       <Route path="/credits" component={Credits} />
       <Route path="/generate" component={GenerateHub} />
+      <Route path="/templates" component={ScriptTemplates} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
