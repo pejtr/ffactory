@@ -138,6 +138,52 @@ export async function wan22TextToVideo(params: {
   return result?.video?.url ?? null;
 }
 
+// ─── Seedance 2.0 — Text-to-Video ────────────────────────────────────────────
+// fal.ai model: fal-ai/bytedance/seedance/v2/non-fast
+export async function seedance20TextToVideo(params: {
+  prompt: string;
+  negativePrompt?: string;
+  aspectRatio?: "16:9" | "9:16" | "1:1" | "4:3" | "3:4";
+  durationSeconds?: 5 | 10;
+  resolution?: "720p" | "1080p";
+}): Promise<string | null> {
+  const modelId = "fal-ai/bytedance/seedance/v2/non-fast";
+  const requestId = await falQueueSubmit(modelId, {
+    prompt: params.prompt,
+    negative_prompt: params.negativePrompt ?? "blurry, low quality, distorted, jitter, face drift, extra fingers, broken limbs, text artifacts",
+    aspect_ratio: params.aspectRatio ?? "16:9",
+    duration: params.durationSeconds ?? 5,
+    resolution: params.resolution ?? "720p",
+  });
+  const result = (await falPollResult(modelId, requestId, 360000)) as { video?: { url: string } };
+  return result?.video?.url ?? null;
+}
+
+// ─── Seedance 2.0 — Video Reference Recreation ───────────────────────────────
+// Uses a reference video for pacing/style, generates new content from prompt
+export async function seedance20ReferenceRecreation(params: {
+  masterPrompt: string;
+  referenceVideoUrl: string;
+  referenceUsageNote?: string;
+  negativePrompt?: string;
+  aspectRatio?: "16:9" | "9:16" | "1:1" | "4:3" | "3:4";
+  durationSeconds?: 5 | 10;
+  resolution?: "720p" | "1080p";
+}): Promise<string | null> {
+  const modelId = "fal-ai/bytedance/seedance/v2/non-fast";
+  const requestId = await falQueueSubmit(modelId, {
+    prompt: params.masterPrompt,
+    reference_video_url: params.referenceVideoUrl,
+    reference_usage: params.referenceUsageNote ?? "Use only for pacing, shot order, and camera energy. Do not copy exact faces, logos, or watermarks.",
+    negative_prompt: params.negativePrompt ?? "avoid readable logos, avoid real team names, avoid warped hands, avoid broken legs, avoid face drift, avoid outfit drift, avoid jitter, avoid temporal flicker, avoid text artifacts",
+    aspect_ratio: params.aspectRatio ?? "9:16",
+    duration: params.durationSeconds ?? 10,
+    resolution: params.resolution ?? "720p",
+  });
+  const result = (await falPollResult(modelId, requestId, 600000)) as { video?: { url: string } };
+  return result?.video?.url ?? null;
+}
+
 // ─── Generate Image via fal.ai (for character Soul ID) ───────────────────────
 export async function falGenerateImage(params: {
   prompt: string;

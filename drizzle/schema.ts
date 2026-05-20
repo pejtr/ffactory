@@ -53,10 +53,15 @@ export const videoProjects = mysqlTable("video_projects", {
   estimatedCostUsd: float("estimatedCostUsd"),
   actualCostUsd: float("actualCostUsd"),
   errorMessage: text("errorMessage"),
+  // Reference Recreation fields
+  projectType: mysqlEnum("projectType", ["standard", "reference_recreation"]).default("standard").notNull(),
+  referenceVideoUrl: text("referenceVideoUrl"),
+  referenceUsageNote: text("referenceUsageNote"),
+  aspectRatio: varchar("aspectRatio", { length: 8 }).default("16:9"),
+  seedancePrompt: json("seedancePrompt"), // full structured JSON prompt
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
-
 export type VideoProject = typeof videoProjects.$inferSelect;
 export type InsertVideoProject = typeof videoProjects.$inferInsert;
 

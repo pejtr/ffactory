@@ -5,6 +5,78 @@ import { scriptTemplates, personas } from "../../drizzle/schema";
 import { eq, and, desc, or, sql } from "drizzle-orm";
 import { invokeLLM } from "../_core/llm";
 
+// ── Reference Recreation Templates ──────────────────────────────────────────
+export const REFERENCE_RECREATION_TEMPLATES = [
+  {
+    id: "football-girl",
+    title: "Football Girl",
+    category: "viral-sports",
+    description: "Hyper-realistic viral football stadium clip. A glamorous woman walks onto the pitch and scores a goal. Absurd, funny, unbelievable — filmed as if totally real. 10s, 9:16.",
+    viralScore: 9.8,
+    tags: "sports,viral,comedy,stadium,9:16",
+    aspectRatio: "9:16",
+    durationSeconds: 10,
+    prompt: {
+      model: "seedance_2_0_non_fast",
+      mode: "video_reference_recreation",
+      aspect_ratio: "9:16",
+      duration_seconds: 10,
+      reference_usage: { "@Video1": "Use only for pacing, shot order, stadium realism, crowd-to-pitch transition, and handheld/broadcast camera energy. Do not copy exact faces, logos, scoreboard text, or watermarks." },
+      master_prompt: "Create a hyper-realistic viral football stadium clip. A glamorous young blonde woman in a fitted dark brown sleeveless dress sits casually among loud yellow-shirt football fans, holding a burger in one hand and a bright blue drink can in the other. She looks bored, takes a bite, sips the drink, then suddenly notices the match. The sequence escalates from crowd close-up to impossible sports fantasy: she leaves the seats, walks confidently onto the pitch, approaches a football, and effortlessly scores a goal while the stadium erupts. She turns back toward camera with a mischievous smile, as if this was completely normal. Realistic broadcast sports cinematography, crowded stadium under floodlights, viral social-media energy, absurd but physically smooth.",
+      shot_script: [
+        { time: "00:00-00:02", shot: "Screen-recorded viral setup", camera: "vertical social media screen-recording feel", action: "Begin on a phone-like social video frame. Quick push into the actual stadium footage.", visual_details: "Dark UI edges, then transition into full-screen stadium broadcast." },
+        { time: "00:02-00:05", shot: "The spectator", camera: "tight broadcast crowd close-up, slight handheld wobble", action: "Glamorous blonde woman in dark brown dress sits between excited yellow-shirt fans. She calmly holds a burger and a blue can, takes a bite, then sips.", visual_details: "Bright yellow jerseys, packed stands, stadium floodlights, shallow depth of field." },
+        { time: "00:05-00:07", shot: "Decision moment", camera: "medium close-up, slow push-in", action: "She glances toward the pitch, raises one eyebrow, casually stands up.", visual_details: "Comedic confidence, no panic." },
+        { time: "00:07-00:09", shot: "Walk onto the pitch", camera: "sideline tracking shot from behind", action: "She steps onto the grass with complete confidence. Security and players hesitate.", visual_details: "Green pitch, white touchline, floodlit cinematic realism." },
+        { time: "00:09-00:10", shot: "Goal and smile", camera: "fast pan to net, then whip back to her", action: "She kicks the ball cleanly. Stadium explodes. She smiles mischievously, picks up her burger.", visual_details: "Crowd eruption, iconic final frame." }
+      ],
+      style: { look: "hyper-realistic sports broadcast mixed with viral phone repost aesthetic", lighting: "bright stadium floodlights, crisp evening match atmosphere", color_palette: "yellow fan shirts, green pitch, dark brown dress, blue drink can contrast", motion: "smooth character motion, realistic walking and kicking physics", tone: "absurd, funny, unbelievable, but filmed as if totally real" },
+      negative_prompt: "avoid readable logos, avoid real team names, avoid warped hands, avoid broken legs, avoid face drift, avoid outfit drift, avoid jitter, avoid temporal flicker, avoid text artifacts",
+      continuity_rules: ["Preserve the same woman throughout: blonde hair, dark brown sleeveless fitted dress.", "Burger and blue can must appear in crowd scene and ending gag.", "Keep crowd dominated by yellow shirts without readable logos.", "Final frame must be her smiling at camera after scoring."]
+    }
+  },
+  {
+    id: "office-superhero",
+    title: "Office Superhero",
+    category: "viral-comedy",
+    description: "A bored office worker discovers telekinesis during a dull meeting. Viral deadpan comedy escalation from mundane to spectacular. 9:16 vertical.",
+    viralScore: 9.3,
+    tags: "comedy,office,superpowers,viral,9:16",
+    aspectRatio: "9:16",
+    durationSeconds: 10,
+    prompt: {
+      model: "seedance_2_0_non_fast",
+      mode: "video_reference_recreation",
+      aspect_ratio: "9:16",
+      duration_seconds: 10,
+      master_prompt: "A hyper-realistic viral office comedy clip. A bored young professional in a grey suit sits in a dull corporate meeting, visibly zoning out. He accidentally knocks over his coffee — but instead of spilling, it freezes mid-air. He stares at it. Slowly realizes he has telekinesis. He moves the cup back. Then the stapler. Then the entire conference table. His colleagues stare in disbelief. He straightens his tie, picks up his laptop, and walks out like nothing happened. Realistic corporate office cinematography, fluorescent lighting, viral social-media energy, deadpan comedy.",
+      style: { look: "realistic corporate office with subtle VFX escalation", lighting: "fluorescent office lighting, slightly overexposed", color_palette: "grey suits, white walls, beige carpet, coffee brown", motion: "static camera escalating to slow tracking shot as powers activate", tone: "deadpan, absurd, relatable, viral" },
+      negative_prompt: "avoid cartoon effects, avoid obvious CGI, avoid unrealistic physics, avoid face drift, avoid warped hands, avoid text artifacts",
+      continuity_rules: ["Same man throughout: grey suit, white shirt, slightly loosened tie.", "Coffee cup must be the catalyst object.", "Keep office environment realistic — no sci-fi elements.", "Final frame: him walking out, colleagues frozen in shock."]
+    }
+  },
+  {
+    id: "street-chef",
+    title: "Street Chef Takeover",
+    category: "viral-food",
+    description: "A street food vendor casually outperforms a Michelin-star chef in his own restaurant. Viral food comedy with stunning culinary visuals. 9:16.",
+    viralScore: 9.1,
+    tags: "food,comedy,viral,chef,restaurant,9:16",
+    aspectRatio: "9:16",
+    durationSeconds: 10,
+    prompt: {
+      model: "seedance_2_0_non_fast",
+      mode: "video_reference_recreation",
+      aspect_ratio: "9:16",
+      duration_seconds: 10,
+      master_prompt: "A hyper-realistic viral food comedy clip. A humble street food vendor in a worn apron and baseball cap wanders into an upscale Michelin-star restaurant kitchen. The head chef in a white toque scoffs at him. The vendor calmly pulls out a battered wok and a small gas burner, sets up in the corner, and starts cooking. The aroma fills the kitchen. The Michelin chef watches, confused. The vendor plates a dish in 60 seconds. The chef tastes it. His face transforms — pure shock and reverence. The vendor shrugs, packs up, and walks out. Cinematic food photography, steam and fire, close-up textures, viral absurdity.",
+      style: { look: "cinematic food documentary meets viral comedy", lighting: "warm kitchen lighting, dramatic steam and fire highlights", color_palette: "white chef coats, stainless steel, golden food textures, worn apron", motion: "handheld documentary style, close-up food shots, reaction close-ups", tone: "humble confidence, absurd, heartwarming, viral" },
+      negative_prompt: "avoid unrealistic food physics, avoid face drift, avoid warped hands, avoid text artifacts, avoid cartoon effects",
+      continuity_rules: ["Street vendor: worn apron, baseball cap, calm expression throughout.", "Michelin chef: white toque, pristine whites, starts dismissive ends reverent.", "The wok and gas burner are the key props.", "Final frame: vendor walking out, chef staring at the empty plate."]
+    }
+  }
+];
+
 // ── Built-in "Trap & Switch" template ─────────────────────────────────────────
 const TRAP_AND_SWITCH_TEMPLATE = {
   title: "The Trap & Switch",
@@ -123,6 +195,10 @@ export const templatesRouter = router({
 
     getBuiltIn: protectedProcedure.query(async () => {
       return TRAP_AND_SWITCH_TEMPLATE;
+    }),
+
+    getBuiltInRefRec: protectedProcedure.query(async () => {
+      return REFERENCE_RECREATION_TEMPLATES;
     }),
 
     create: protectedProcedure

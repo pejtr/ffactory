@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `credit_transactions` MODIFY COLUMN `type` enum('signup_bonus','purchase','video_generation','image_generation','audio_generation','motion_generation','video_edit','image_edit','generate_hub','story_script','story_video','story_thumbnail','refund','referral_bonus','referral_signup') NOT NULL;\nALTER TABLE `video_projects` ADD `projectType` enum('standard','reference_recreation') DEFAULT 'standard' NOT NULL;\nALTER TABLE `video_projects` ADD `referenceVideoUrl` text;\nALTER TABLE `video_projects` ADD `referenceUsageNote` text;\nALTER TABLE `video_projects` ADD `aspectRatio` varchar(8) DEFAULT '16:9';\nALTER TABLE `video_projects` ADD `seedancePrompt` json;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4VFjuiBDjCy66KV.bcbe7f466b7f --database Mr5EShmAb9yHiZeSQrrR5i --execute ALTER TABLE `credit_transactions` MODIFY COLUMN `type` enum('signup_bonus','purchase','video_generation','image_generation','audio_generation','motion_generation','video_edit','image_edit','generate_hub','story_script','story_video','story_thumbnail','refund','referral_bonus','referral_signup') NOT NULL;\nALTER TABLE `video_projects` ADD `projectType` enum('standard','reference_recreation') DEFAULT 'standard' NOT NULL;\nALTER TABLE `video_projects` ADD `referenceVideoUrl` text;\nALTER TABLE `video_projects` ADD `referenceUsageNote` text;\nALTER TABLE `video_projects` ADD `aspectRatio` varchar(8) DEFAULT '16:9';\nALTER TABLE `video_projects` ADD `seedancePrompt` json;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1797
+}

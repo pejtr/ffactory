@@ -27,6 +27,7 @@ import { storyRouter } from "./routers/story";
 import { templatesRouter } from "./routers/templates";
 import { gamificationRouter } from "./routers/gamification";
 import { referralRouter } from "./routers/referral";
+import { referenceRecreationRouter } from "./routers/referenceRecreation";
 
 export const appRouter = router({
   system: systemRouter,
@@ -34,6 +35,7 @@ export const appRouter = router({
   scriptTemplates: templatesRouter,
   gamification: gamificationRouter,
   referral: referralRouter,
+  refRecreation: referenceRecreationRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

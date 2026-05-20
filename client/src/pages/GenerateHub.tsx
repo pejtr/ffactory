@@ -115,6 +115,26 @@ export default function GenerateHub() {
           </div>
         )}
         {activeTab === "videos" && (
+          <>
+          <div className="mb-4 border border-cyan-500/20 rounded-xl p-4 bg-slate-900/40 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center shrink-0">
+                <Sparkles className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-white">Seedance 2.0 — Reference Recreation</h3>
+                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs">NEW</Badge>
+                </div>
+                <p className="text-xs text-slate-400">Viral video generation with shot scripts, style guides, and optional reference video. 3 built-in viral templates.</p>
+              </div>
+            </div>
+            <Link href="/reference-recreation">
+              <Button size="sm" className="bg-gradient-to-r from-cyan-600 to-purple-600 hover:from-cyan-500 hover:to-purple-500 text-white shrink-0 ml-4">
+                <Film className="w-3 h-3 mr-1" /> Open Studio
+              </Button>
+            </Link>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="bg-[oklch(0.10_0.02_240)] border-[oklch(0.22_0.03_230)] p-5">
               <h3 className="font-display text-sm text-foreground mb-4 flex items-center gap-2"><Film className="w-4 h-4 text-blue-400" />Kling Image-to-Video</h3>
@@ -155,6 +175,7 @@ export default function GenerateHub() {
               )}
             </div>
           </div>
+          </>
         )}
         {activeTab === "edit" && (
           <div className="text-center py-16">
