@@ -45,6 +45,7 @@ export const videoProjects = mysqlTable("video_projects", {
     "assembling",
     "completed",
     "failed",
+    "cancelled",
   ]).default("draft").notNull(),
   screenplay: json("screenplay"),
   shareToken: varchar("shareToken", { length: 64 }).unique(),
@@ -109,7 +110,7 @@ export const scenes = mysqlTable("scenes", {
   characterIds: json("characterIds"),
   duration: int("duration").default(5),
   status: mysqlEnum("status", [
-    "pending", "generating", "completed", "failed"
+    "pending", "generating", "completed", "failed", "cancelled"
   ]).default("pending").notNull(),
   videoUrl: text("videoUrl"),
   audioUrl: text("audioUrl"),

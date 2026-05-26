@@ -57,6 +57,15 @@ const EMOTIONS = [
   { id: "Energetic & Exciting", label: "Energický", emoji: "🎯" },
 ];
 
+const SELECTABLE_MODELS = [
+  { id: "kling-v3-omni",      label: "Kling 3.0 Omni",   color: "text-blue-400",   costPerSec: 0.08 },
+  { id: "kling-v3-motion",    label: "Kling Motion",     color: "text-orange-400", costPerSec: 0.06 },
+  { id: "hailuo-minimax-2.3", label: "Hailuo MiniMax",   color: "text-purple-400", costPerSec: 0.04 },
+  { id: "wan-2.2-t2v",        label: "WAN 2.2 T2V",      color: "text-teal-400",   costPerSec: 0.02 },
+  { id: "wan-2.2-s2v",        label: "WAN 2.2 Lip Sync", color: "text-green-400",  costPerSec: 0.03 },
+  { id: "seedance-2.0",       label: "Seedance 2.0",     color: "text-amber-400",  costPerSec: 0.05 },
+];
+
 const MODEL_LABELS: Record<string, { label: string; color: string }> = {
   "kling-v3-omni": { label: "Kling 3.0 Omni", color: "text-blue-400" },
   "kling-3.0-omni": { label: "Kling 3.0 Omni", color: "text-blue-400" },
@@ -144,6 +153,27 @@ export default function Studio() {
 
   const [screenplay, setScreenplay] = useState<ScreenplayData | null>(null);
   const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
+  const [budgetMode, setBudgetMode] = useState(false);
+  const [sceneModels, setSceneModels] = useState<Record<number, string>>({});
+
+  const BUDGET_MAP: Record<string, string> = {
+    "kling-v3-omni": "wan-2.2-t2v",
+    "kling-3.0-omni": "wan-2.2-t2v",
+    "kling-v3-motion": "wan-2.2-t2v",
+    "kling-motion-control": "wan-2.2-t2v",
+  };
+
+  const getEffectiveModel = (sceneIdx: number, originalModel: string) =>
+    sceneModels[sceneIdx] ?? (budgetMode ? (BUDGET_MAP[originalModel] ?? originalModel) : originalModel);
+
+  const calcBudgetCost = () => {
+    if (!screenplay) return null;
+    return screenplay.scenes.reduce((sum, scene, i) => {
+      const model = getEffectiveModel(i, scene.videoModel);
+      const costPerSec = SELECTABLE_MODELS.find((m) => m.id === model)?.costPerSec ?? 0.04;
+      return sum + scene.duration * costPerSec;
+    }, 0);
+  };
 
   const previewMutation = trpc.video.preview.useMutation();
   const createMutation = trpc.video.create.useMutation();
@@ -432,8 +462,29 @@ export default function Studio() {
               </div>
             )}
 
+            {/* Budget Mode toggle */}
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-800/40 border border-slate-700/50">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-yellow-400" />
+                <div>
+                  <div className="text-sm font-medium text-white">Budget Mode</div>
+                  <div className="text-xs text-slate-400">Nahradí drahé modely levnějšími (WAN 2.2 T2V)</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setBudgetMode((v) => !v)}
+                className={`relative w-11 h-6 rounded-full transition-colors ${budgetMode ? "bg-yellow-500" : "bg-slate-600"}`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${budgetMode ? "translate-x-5" : ""}`} />
+              </button>
+            </div>
+
             <div className="space-y-2">
-              {screenplay.scenes.map((scene, i) => (
+              {screenplay.scenes.map((scene, i) => {
+                const effectiveModel = getEffectiveModel(i, scene.videoModel);
+                const modelInfo = MODEL_LABELS[effectiveModel] ?? { label: effectiveModel, color: "text-slate-400" };
+                const sceneCost = scene.duration * (SELECTABLE_MODELS.find((m) => m.id === effectiveModel)?.costPerSec ?? 0.04);
+                return (
                 <Card key={i} className="bg-slate-800/40 border-slate-700/50">
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
@@ -447,19 +498,37 @@ export default function Studio() {
                             {SCENE_TYPE_LABELS[scene.sceneType] ?? scene.sceneType}
                           </Badge>
                           <span className="text-xs text-slate-500">{scene.duration}s</span>
+                          <span className="text-xs text-yellow-500/80">${sceneCost.toFixed(2)}</span>
                         </div>
                         <p className="text-xs text-slate-400 line-clamp-2">{scene.description}</p>
                         {scene.dialogue && (
-                          <p className="text-xs text-blue-400 mt-1 italic line-clamp-1">„{scene.dialogue}"</p>
+                          <p className="text-xs text-blue-400 mt-1 italic line-clamp-1">„{scene.dialogue}“</p>
                         )}
+                        {/* Per-scene model selector */}
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {SELECTABLE_MODELS.map((m) => (
+                            <button
+                              key={m.id}
+                              onClick={() => setSceneModels((prev) => ({ ...prev, [i]: m.id }))}
+                              className={`text-xs px-2 py-0.5 rounded-full border transition-all ${
+                                effectiveModel === m.id
+                                  ? `border-current ${m.color} bg-white/5`
+                                  : "border-slate-700 text-slate-500 hover:border-slate-500"
+                              }`}
+                            >
+                              {m.label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                      <span className={`text-xs font-medium shrink-0 ${MODEL_LABELS[scene.videoModel]?.color ?? "text-slate-400"}`}>
-                        {MODEL_LABELS[scene.videoModel]?.label ?? scene.videoModel}
+                      <span className={`text-xs font-medium shrink-0 ${modelInfo.color}`}>
+                        {modelInfo.label}
                       </span>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
 
             <div className="flex gap-3">
@@ -535,7 +604,19 @@ export default function Studio() {
                 {estimatedCost !== null && (
                   <div className="flex justify-between text-sm border-t border-slate-700 pt-3">
                     <span className="text-slate-400">Odhadovaná cena</span>
-                    <span className="text-yellow-400 font-bold">~${estimatedCost.toFixed(2)}</span>
+                    <div className="text-right">
+                      {(budgetMode || Object.keys(sceneModels).length > 0) && (
+                        <div className="text-xs text-slate-500 line-through">${estimatedCost.toFixed(2)}</div>
+                      )}
+                      <span className="text-yellow-400 font-bold">
+                        ~${(calcBudgetCost() ?? estimatedCost).toFixed(2)}
+                      </span>
+                      {budgetMode && (
+                        <div className="text-xs text-green-400 mt-0.5">
+                          Ušetříš ${(estimatedCost - (calcBudgetCost() ?? estimatedCost)).toFixed(2)}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </CardContent>

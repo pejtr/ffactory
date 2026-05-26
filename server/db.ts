@@ -1,4 +1,4 @@
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, desc, asc, inArray, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, videoProjects, scenes, characters, audioTracks } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -90,6 +90,37 @@ export async function getProjectAudioTracks(projectId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(audioTracks).where(eq(audioTracks.projectId, projectId));
+}
+
+// ─── Video Project Control ─────────────────────────────────────────────────────
+export async function cancelVideoProject(projectId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(videoProjects)
+    .set({ status: "cancelled" })
+    .where(eq(videoProjects.id, projectId));
+  await db.update(scenes)
+    .set({ status: "cancelled" })
+    .where(and(eq(scenes.projectId, projectId), inArray(scenes.status, ["pending", "generating"])));
+}
+
+export async function resetSceneForRegeneration(sceneId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(scenes)
+    .set({ status: "pending", videoUrl: null, errorMessage: null, klingTaskId: null, falTaskId: null })
+    .where(eq(scenes.id, sceneId));
+}
+
+export async function resetProjectForRegeneration(projectId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(videoProjects)
+    .set({ status: "generating_scenes", errorMessage: null })
+    .where(eq(videoProjects.id, projectId));
+  await db.update(scenes)
+    .set({ status: "pending", videoUrl: null, errorMessage: null, klingTaskId: null, falTaskId: null })
+    .where(eq(scenes.projectId, projectId));
 }
 
 // ─── Characters ────────────────────────────────────────────────────────────────

@@ -6,6 +6,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import {
   createVideoProject, getVideoProject, getUserProjects, getProjectScenes,
   getProjectAudioTracks, getVideoProjectByToken,
+  cancelVideoProject, resetSceneForRegeneration, resetProjectForRegeneration,
   getUserCharacters, createCharacter, getCharacter, updateCharacterSoulId, deleteCharacter,
   updateCharacterReferenceImages, addCharacterReferenceImage, removeCharacterReferenceImage,
   type ReferenceImage,
@@ -132,11 +133,41 @@ export const appRouter = router({
           shareToken: project.shareToken,
           finalVideoUrl: project.finalVideoUrl,
           errorMessage: project.errorMessage,
-          scenes: projectScenes,
+           scenes: projectScenes,
         };
       }),
+    cancel: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getVideoProject(input.id);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        await cancelVideoProject(input.id);
+        return { success: true };
+      }),
+    regenerateScene: protectedProcedure
+      .input(z.object({ projectId: z.number(), sceneId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getVideoProject(input.projectId);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        await resetSceneForRegeneration(input.sceneId);
+        // Fire pipeline for just this scene in background
+        runVideoPipeline(input.projectId).catch((e) =>
+          console.error(`[Pipeline] Regen scene error for project ${input.projectId}:`, e)
+        );
+        return { success: true };
+      }),
+    regenerateProject: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const project = await getVideoProject(input.id);
+        if (!project || project.userId !== ctx.user.id) throw new Error("Not found");
+        await resetProjectForRegeneration(input.id);
+        runVideoPipeline(input.id).catch((e) =>
+          console.error(`[Pipeline] Regen project error for project ${input.id}:`, e)
+        );
+        return { success: true };
+      }),
   }),
-
   characters: router({
     list: protectedProcedure.query(async ({ ctx }) => {
       return getUserCharacters(ctx.user.id);

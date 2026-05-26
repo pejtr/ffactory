@@ -1,0 +1,2 @@
+ALTER TABLE `scenes` MODIFY COLUMN `status` enum('pending','generating','completed','failed','cancelled') NOT NULL DEFAULT 'pending';--> statement-breakpoint
+ALTER TABLE `video_projects` MODIFY COLUMN `status` enum('draft','generating_screenplay','generating_scenes','generating_audio','assembling','completed','failed','cancelled') NOT NULL DEFAULT 'draft';
