@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -141,20 +142,36 @@ function StepIndicator({ current, steps }: { current: number; steps: string[] })
 }
 
 export default function Studio() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [, navigate] = useLocation();
-  const [step, setStep] = useState(0);
 
-  const [idea, setIdea] = useState("");
-  const [genre, setGenre] = useState("Sci-Fi Drama");
-  const [emotion, setEmotion] = useState("Epic & Triumphant");
-  const [duration, setDuration] = useState(60);
-  const [dreamMode, setDreamMode] = useState(false);
+  // ── Persistent form state (survives page refresh) ──────────────────────────
+  const uid = user?.id ?? "guest";
+  const [step, setStep] = useLocalStorage(`studio_${uid}_step`, 0);
+  const [idea, setIdea] = useLocalStorage(`studio_${uid}_idea`, "");
+  const [genre, setGenre] = useLocalStorage(`studio_${uid}_genre`, "Sci-Fi Drama");
+  const [emotion, setEmotion] = useLocalStorage(`studio_${uid}_emotion`, "Epic & Triumphant");
+  const [duration, setDuration] = useLocalStorage(`studio_${uid}_duration`, 60);
+  const [dreamMode, setDreamMode] = useLocalStorage(`studio_${uid}_dreamMode`, false);
+  const [screenplay, setScreenplay] = useLocalStorage<ScreenplayData | null>(`studio_${uid}_screenplay`, null);
+  const [estimatedCost, setEstimatedCost] = useLocalStorage<number | null>(`studio_${uid}_cost`, null);
+  const [budgetMode, setBudgetMode] = useLocalStorage(`studio_${uid}_budgetMode`, false);
+  const [sceneModels, setSceneModels] = useLocalStorage<Record<number, string>>(`studio_${uid}_sceneModels`, {});
 
-  const [screenplay, setScreenplay] = useState<ScreenplayData | null>(null);
-  const [estimatedCost, setEstimatedCost] = useState<number | null>(null);
-  const [budgetMode, setBudgetMode] = useState(false);
-  const [sceneModels, setSceneModels] = useState<Record<number, string>>({});
+  // Auto-redirect to last active project if it's still generating
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const lastId = localStorage.getItem(`vf_last_project_${user.id}`);
+      if (lastId) {
+        // Only redirect if we're on step 0 (fresh studio) and idea is empty
+        if (step === 0 && !idea) {
+          navigate(`/project/${lastId}`);
+        }
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const BUDGET_MAP: Record<string, string> = {
     "kling-v3-omni": "wan-2.2-t2v",
@@ -221,12 +238,20 @@ export default function Studio() {
         dreamMode,
         targetDuration: duration,
       });
+      // Clear draft after successful creation
+      const keys = [`studio_${uid}_step`, `studio_${uid}_idea`, `studio_${uid}_genre`,
+        `studio_${uid}_emotion`, `studio_${uid}_duration`, `studio_${uid}_dreamMode`,
+        `studio_${uid}_screenplay`, `studio_${uid}_cost`, `studio_${uid}_budgetMode`,
+        `studio_${uid}_sceneModels`];
+      keys.forEach(k => { try { localStorage.removeItem(k); } catch {} });
+      // Remember last active project for auto-redirect
+      try { localStorage.setItem(`vf_last_project_${uid}`, String(result.projectId)); } catch {}
       toast.success("Video se začalo generovat!");
       navigate(`/project/${result.projectId}`);
     } catch {
       toast.error("Nepodařilo se spustit generování. Zkus to znovu.");
     }
-  }, [idea, genre, emotion, dreamMode, duration, createMutation, navigate]);
+  }, [idea, genre, emotion, dreamMode, duration, uid, createMutation, navigate]);
 
   if (!isAuthenticated) {
     return (

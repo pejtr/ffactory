@@ -2,6 +2,16 @@ const FAL_API_KEY = process.env.FAL_API_KEY!;
 const FAL_BASE = "https://fal.run";
 const FAL_QUEUE = "https://queue.fal.run";
 
+// fal.ai REST API: input is sent directly (no { input: ... } wrapper)
+// Status/result URLs come from the submit response — do NOT construct them from modelId
+
+type FalQueueResponse = {
+  request_id: string;
+  status_url: string;
+  response_url: string;
+  cancel_url: string;
+};
+
 async function falRequest(modelId: string, input: unknown): Promise<unknown> {
   const res = await fetch(`${FAL_BASE}/${modelId}`, {
     method: "POST",
@@ -9,7 +19,7 @@ async function falRequest(modelId: string, input: unknown): Promise<unknown> {
       Authorization: `Key ${FAL_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ input }),
+    body: JSON.stringify(input),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -18,33 +28,32 @@ async function falRequest(modelId: string, input: unknown): Promise<unknown> {
   return res.json();
 }
 
-async function falQueueSubmit(modelId: string, input: unknown): Promise<string> {
+async function falQueueSubmit(modelId: string, input: unknown): Promise<FalQueueResponse> {
   const res = await fetch(`${FAL_QUEUE}/${modelId}`, {
     method: "POST",
     headers: {
       Authorization: `Key ${FAL_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ input }),
+    body: JSON.stringify(input),
   });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`fal.ai queue error ${res.status}: ${text}`);
   }
-  const data = (await res.json()) as { request_id: string };
-  return data.request_id;
+  return res.json() as Promise<FalQueueResponse>;
 }
 
-async function falQueueStatus(modelId: string, requestId: string): Promise<unknown> {
-  const res = await fetch(`${FAL_QUEUE}/${modelId}/requests/${requestId}/status`, {
+async function falQueueStatusByUrl(statusUrl: string): Promise<{ status: string }> {
+  const res = await fetch(statusUrl, {
     headers: { Authorization: `Key ${FAL_API_KEY}` },
   });
   if (!res.ok) throw new Error(`fal.ai status error ${res.status}`);
-  return res.json();
+  return res.json() as Promise<{ status: string }>;
 }
 
-async function falQueueResult(modelId: string, requestId: string): Promise<unknown> {
-  const res = await fetch(`${FAL_QUEUE}/${modelId}/requests/${requestId}`, {
+async function falQueueResultByUrl(responseUrl: string): Promise<unknown> {
+  const res = await fetch(responseUrl, {
     headers: { Authorization: `Key ${FAL_API_KEY}` },
   });
   if (!res.ok) throw new Error(`fal.ai result error ${res.status}`);
@@ -56,11 +65,18 @@ export async function falPollResult(
   requestId: string,
   maxWaitMs = 300000
 ): Promise<unknown> {
+  // Reconstruct URLs using the pattern from fal.ai responses
+  // Pattern: queue.fal.run/{namespace}/requests/{id}/status
+  // where namespace is the first two path segments of modelId (e.g. "fal-ai/wan")
+  const namespace = modelId.split("/").slice(0, 2).join("/");
+  const statusUrl = `${FAL_QUEUE}/${namespace}/requests/${requestId}/status`;
+  const responseUrl = `${FAL_QUEUE}/${namespace}/requests/${requestId}`;
+
   const start = Date.now();
   while (Date.now() - start < maxWaitMs) {
-    const status = (await falQueueStatus(modelId, requestId)) as { status: string };
+    const status = await falQueueStatusByUrl(statusUrl);
     if (status.status === "COMPLETED") {
-      return falQueueResult(modelId, requestId);
+      return falQueueResultByUrl(responseUrl);
     }
     if (status.status === "FAILED") {
       throw new Error(`fal.ai job failed for ${modelId}`);
@@ -70,21 +86,18 @@ export async function falPollResult(
   throw new Error(`fal.ai job timed out for ${modelId}`);
 }
 
-// ─── Hailuo MiniMax 2.3 — Cinematic B-roll ───────────────────────────────────
+// ─── Hailuo MiniMax — Cinematic B-roll ───────────────────────────────────────
 export async function hailiuoTextToVideo(params: {
   prompt: string;
   resolution?: "768p" | "1080p";
   duration?: 6;
 }) {
-  const modelId = params.resolution === "1080p"
-    ? "fal-ai/minimax/video-01-live/text-to-video"
-    : "fal-ai/minimax/video-01-live/text-to-video";
-
-  const requestId = await falQueueSubmit(modelId, {
+  const modelId = "fal-ai/minimax/video-01/text-to-video";
+  const queueResp = await falQueueSubmit(modelId, {
     prompt: params.prompt,
     prompt_optimizer: true,
   });
-  const result = (await falPollResult(modelId, requestId)) as { video?: { url: string } };
+  const result = (await falPollResult(modelId, queueResp.request_id)) as { video?: { url: string } };
   return result?.video?.url ?? null;
 }
 
@@ -92,13 +105,13 @@ export async function hailiuoImageToVideo(params: {
   imageUrl: string;
   prompt: string;
 }) {
-  const modelId = "fal-ai/minimax/video-01-live/image-to-video";
-  const requestId = await falQueueSubmit(modelId, {
+  const modelId = "fal-ai/minimax/video-01/image-to-video";
+  const queueResp = await falQueueSubmit(modelId, {
     image_url: params.imageUrl,
     prompt: params.prompt,
     prompt_optimizer: true,
   });
-  const result = (await falPollResult(modelId, requestId)) as { video?: { url: string } };
+  const result = (await falPollResult(modelId, queueResp.request_id)) as { video?: { url: string } };
   return result?.video?.url ?? null;
 }
 
@@ -109,15 +122,14 @@ export async function wan22ImageToVideo(params: {
   negativePrompt?: string;
   resolution?: "480p" | "720p";
 }) {
-  const modelId = "fal-ai/wan/v2.2/i2v";
-  const requestId = await falQueueSubmit(modelId, {
+  const modelId = "fal-ai/wan/v2.2-a14b/image-to-video";
+  const queueResp = await falQueueSubmit(modelId, {
     image_url: params.imageUrl,
     prompt: params.prompt,
     negative_prompt: params.negativePrompt ?? "blurry, low quality, distorted",
     resolution: params.resolution ?? "720p",
-    num_frames: 81,
   });
-  const result = (await falPollResult(modelId, requestId)) as { video?: { url: string } };
+  const result = (await falPollResult(modelId, queueResp.request_id)) as { video?: { url: string } };
   return result?.video?.url ?? null;
 }
 
@@ -127,19 +139,17 @@ export async function wan22TextToVideo(params: {
   negativePrompt?: string;
   resolution?: "480p" | "720p";
 }) {
-  const modelId = "fal-ai/wan/v2.2/t2v";
-  const requestId = await falQueueSubmit(modelId, {
+  const modelId = "fal-ai/wan/v2.2-a14b/text-to-video";
+  const queueResp = await falQueueSubmit(modelId, {
     prompt: params.prompt,
     negative_prompt: params.negativePrompt ?? "blurry, low quality",
     resolution: params.resolution ?? "720p",
-    num_frames: 81,
   });
-  const result = (await falPollResult(modelId, requestId)) as { video?: { url: string } };
+  const result = (await falPollResult(modelId, queueResp.request_id)) as { video?: { url: string } };
   return result?.video?.url ?? null;
 }
 
 // ─── Seedance 2.0 — Text-to-Video ────────────────────────────────────────────
-// fal.ai model: fal-ai/bytedance/seedance/v2/non-fast
 export async function seedance20TextToVideo(params: {
   prompt: string;
   negativePrompt?: string;
@@ -148,19 +158,18 @@ export async function seedance20TextToVideo(params: {
   resolution?: "720p" | "1080p";
 }): Promise<string | null> {
   const modelId = "fal-ai/bytedance/seedance/v2/non-fast";
-  const requestId = await falQueueSubmit(modelId, {
+  const queueResp = await falQueueSubmit(modelId, {
     prompt: params.prompt,
     negative_prompt: params.negativePrompt ?? "blurry, low quality, distorted, jitter, face drift, extra fingers, broken limbs, text artifacts",
     aspect_ratio: params.aspectRatio ?? "16:9",
     duration: params.durationSeconds ?? 5,
     resolution: params.resolution ?? "720p",
   });
-  const result = (await falPollResult(modelId, requestId, 360000)) as { video?: { url: string } };
+  const result = (await falPollResult(modelId, queueResp.request_id, 360000)) as { video?: { url: string } };
   return result?.video?.url ?? null;
 }
 
 // ─── Seedance 2.0 — Video Reference Recreation ───────────────────────────────
-// Uses a reference video for pacing/style, generates new content from prompt
 export async function seedance20ReferenceRecreation(params: {
   masterPrompt: string;
   referenceVideoUrl: string;
@@ -171,7 +180,7 @@ export async function seedance20ReferenceRecreation(params: {
   resolution?: "720p" | "1080p";
 }): Promise<string | null> {
   const modelId = "fal-ai/bytedance/seedance/v2/non-fast";
-  const requestId = await falQueueSubmit(modelId, {
+  const queueResp = await falQueueSubmit(modelId, {
     prompt: params.masterPrompt,
     reference_video_url: params.referenceVideoUrl,
     reference_usage: params.referenceUsageNote ?? "Use only for pacing, shot order, and camera energy. Do not copy exact faces, logos, or watermarks.",
@@ -180,14 +189,14 @@ export async function seedance20ReferenceRecreation(params: {
     duration: params.durationSeconds ?? 10,
     resolution: params.resolution ?? "720p",
   });
-  const result = (await falPollResult(modelId, requestId, 600000)) as { video?: { url: string } };
+  const result = (await falPollResult(modelId, queueResp.request_id, 600000)) as { video?: { url: string } };
   return result?.video?.url ?? null;
 }
 
 // ─── Generate Image via fal.ai (for character Soul ID) ───────────────────────
 export async function falGenerateImage(params: {
   prompt: string;
-  imageUrl?: string; // reference image for consistency
+  imageUrl?: string;
   modelId?: string;
 }): Promise<string> {
   const modelId = params.modelId ?? "fal-ai/flux/schnell";

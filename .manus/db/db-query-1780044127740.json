@@ -1,0 +1,18 @@
+{
+  "query": "\nUPDATE scenes SET status = 'pending', videoUrl = NULL, errorMessage = NULL, klingTaskId = NULL WHERE projectId = 90001 AND status = 'failed';\nSHOW COLUMNS FROM video_projects WHERE Field = 'status';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4VFjuiBDjCy66KV.bcbe7f466b7f --database Mr5EShmAb9yHiZeSQrrR5i --execute \nUPDATE scenes SET status = 'pending', videoUrl = NULL, errorMessage = NULL, klingTaskId = NULL WHERE projectId = 90001 AND status = 'failed';\nSHOW COLUMNS FROM video_projects WHERE Field = 'status';\n",
+  "rows": [
+    {
+      "Field": "status",
+      "Type": "enum('draft','generating_screenplay','generating_scenes','generating_audio','assembling','completed','failed','cancelled')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "draft",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nstatus\tenum('draft','generating_screenplay','generating_scenes','generating_audio','assembling','completed','failed','cancelled')\tNO\t\tdraft\t\n",
+  "stderr": "",
+  "execution_time_ms": 275
+}

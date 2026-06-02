@@ -121,6 +121,14 @@
 - [x] Tests: referral.test.ts
 - [x] TypeScript: 0 errors check
 
+## Persistence / Memory (v4.0)
+- [ ] Studio form: save all wizard fields to localStorage on every change
+- [ ] Studio form: restore fields on mount (per-user key)
+- [ ] Studio form: clear localStorage after successful project creation
+- [ ] ProjectView: remember last active project ID in localStorage
+- [ ] ProjectView: auto-redirect to last project on Studio open if generating
+- [ ] ProjectView: resume polling immediately after refresh if status is generating
+
 ## Cynema AI Features + Script Templates (v3.0)
 - [ ] Scene-Based Editor — edit individual scenes after generation (prompt, model, duration, camera)
 - [ ] Multi-format Export presets — 16:9 YouTube, 9:16 TikTok/Shorts, 1:1 Instagram

@@ -1,0 +1,33 @@
+{
+  "query": "\nUPDATE video_projects SET status = 'draft', errorMessage = NULL WHERE id = 90001;\nSELECT id, status, videoModel FROM scenes WHERE projectId = 90001 ORDER BY sceneIndex;\nSELECT id, status FROM video_projects WHERE id = 90001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4VFjuiBDjCy66KV.bcbe7f466b7f --database Mr5EShmAb9yHiZeSQrrR5i --execute \nUPDATE video_projects SET status = 'draft', errorMessage = NULL WHERE id = 90001;\nSELECT id, status, videoModel FROM scenes WHERE projectId = 90001 ORDER BY sceneIndex;\nSELECT id, status FROM video_projects WHERE id = 90001;\n",
+  "rows": [
+    {
+      "id": "1",
+      "status": "pending",
+      "videoModel": "kling-v3-motion"
+    },
+    {
+      "id": "2",
+      "status": "pending",
+      "videoModel": "wan-2.2-t2v"
+    },
+    {
+      "id": "3",
+      "status": "pending",
+      "videoModel": "hailuo-minimax-2.3"
+    },
+    {
+      "id": "4",
+      "status": "pending",
+      "videoModel": "kling-v3-omni"
+    }
+  ],
+  "messages": [
+    "id\tstatus",
+    "90001\tdraft"
+  ],
+  "stdout": "id\tstatus\tvideoModel\n1\tpending\tkling-v3-motion\n2\tpending\twan-2.2-t2v\n3\tpending\thailuo-minimax-2.3\n4\tpending\tkling-v3-omni\nid\tstatus\n90001\tdraft\n",
+  "stderr": "",
+  "execution_time_ms": 280
+}

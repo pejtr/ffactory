@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,9 +78,16 @@ const STATUS_LABEL_CS: Record<string, string> = {
 export default function ProjectView() {
   const params = useParams<{ id: string }>();
   const projectId = parseInt(params.id ?? "0");
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const utils = trpc.useUtils();
+
+  // Persist last viewed project so Studio can redirect back on refresh
+  useEffect(() => {
+    if (projectId && user?.id) {
+      try { localStorage.setItem(`vf_last_project_${user.id}`, String(projectId)); } catch {}
+    }
+  }, [projectId, user?.id]);
 
   const isActiveStatus = (s?: string) =>
     s === "generating_screenplay" || s === "generating_audio" ||

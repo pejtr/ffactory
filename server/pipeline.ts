@@ -124,13 +124,24 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
       await updateSceneStatus(scene.id, "generating");
       try {
         let videoUrl: string | null = null;
-        const model = scene.videoModel ?? "hailuo-minimax-2.3";
+        const rawModel = scene.videoModel ?? "wan-2.2-t2v";
 
-        if (model === "kling-v3-omni" || model === "kling-v3-motion") {
-          const cameraPreset = model === "kling-v3-motion"
+        // Budget Mode: Kling requires separate paid account — route to WAN 2.2 T2V
+        // Hailuo MiniMax also routed to WAN 2.2 for consistency on fal.ai
+        const isKling = rawModel.startsWith("kling") || rawModel === "kling-3.0" || rawModel === "Kling 3.0" || rawModel === "Kling Motion" || rawModel === "Kling 3.0 Omni";
+        const isHailuo = rawModel.includes("hailuo") || rawModel.includes("minimax") || rawModel === "Hailuo MiniMax" || rawModel === "Hailuo 2.3";
+        const model = (isKling || isHailuo) ? "wan-2.2-t2v" : rawModel;
+
+        if (model === "wan-2.2-t2v" || model === "wan-2.2-s2v" || model === "wan-2.2" || model === "WAN 2.2 T2V") {
+          videoUrl = await wan22TextToVideo({
+            prompt: scene.visualPrompt ?? scene.description,
+            resolution: "720p",
+          });
+        } else if (rawModel.startsWith("kling") && !isKling) {
+          // Direct Kling path — only if Kling account has credit
+          const cameraPreset = rawModel === "kling-v3-motion"
             ? KLING_CAMERA_PRESETS.dollyIn
             : KLING_CAMERA_PRESETS.static;
-
           const task = await klingTextToVideo({
             prompt: scene.visualPrompt ?? scene.description,
             modelName: "kling-v3",
@@ -144,11 +155,8 @@ export async function runVideoPipeline(projectId: number): Promise<void> {
             await updateSceneStatus(scene.id, "generating", { klingTaskId: taskId });
             videoUrl = await klingPollTask(taskId, "t2v");
           }
-        } else if (model === "hailuo-minimax-2.3") {
-          videoUrl = await hailiuoTextToVideo({
-            prompt: scene.visualPrompt ?? scene.description,
-          });
-        } else if (model === "wan-2.2-t2v" || model === "wan-2.2-s2v") {
+        } else {
+          // Fallback: WAN 2.2
           videoUrl = await wan22TextToVideo({
             prompt: scene.visualPrompt ?? scene.description,
             resolution: "720p",

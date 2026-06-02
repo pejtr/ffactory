@@ -5,13 +5,16 @@ const KLING_SECRET_KEY = process.env.KLING_SECRET_KEY!;
 const KLING_BASE_URL = "https://api.klingai.com";
 
 // Generate JWT token for Kling API authentication
+// Kling requires explicit nbf (not-before) claim — must be set to current time in seconds
 async function getKlingToken(): Promise<string> {
   const secret = new TextEncoder().encode(KLING_SECRET_KEY);
-  const token = await new jose.SignJWT({})
+  const nowSec = Math.floor(Date.now() / 1000);
+  const token = await new jose.SignJWT({
+    iss: KLING_ACCESS_KEY,
+    exp: nowSec + 1800,  // 30 min
+    nbf: nowSec - 5,     // 5s grace for clock skew
+  })
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-    .setIssuedAt()
-    .setExpirationTime("30m")
-    .setIssuer(KLING_ACCESS_KEY)
     .sign(secret);
   return token;
 }

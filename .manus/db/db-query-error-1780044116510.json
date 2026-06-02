@@ -1,0 +1,8 @@
+{
+  "query": "\nUPDATE scenes SET status = 'pending', videoUrl = NULL, errorMessage = NULL, klingTaskId = NULL WHERE projectId = 90001 AND status = 'failed';\nUPDATE video_projects SET status = 'pending', errorMessage = NULL WHERE id = 90001;\nSELECT id, status, videoModel FROM scenes WHERE projectId = 90001 ORDER BY sceneIndex;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4VFjuiBDjCy66KV.bcbe7f466b7f --database Mr5EShmAb9yHiZeSQrrR5i --execute \nUPDATE scenes SET status = 'pending', videoUrl = NULL, errorMessage = NULL, klingTaskId = NULL WHERE projectId = 90001 AND status = 'failed';\nUPDATE video_projects SET status = 'pending', errorMessage = NULL WHERE id = 90001;\nSELECT id, status, videoModel FROM scenes WHERE projectId = 90001 ORDER BY sceneIndex;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 3: Data truncated for column '%s' at row %d"
+  ]
+}
