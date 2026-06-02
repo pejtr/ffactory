@@ -113,6 +113,27 @@ export default function ChannelBlueprint() {
   // Mutations
   const validateNicheMutation = trpc.youtube.validateNiche.useMutation();
   const generateBlueprintMutation = trpc.youtube.generateBlueprint.useMutation();
+  const exportPdfMutation = trpc.youtube.exportBlueprintPdf.useMutation();
+  const [exportingPdf, setExportingPdf] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (!blueprintData) return;
+    setExportingPdf(true);
+    try {
+      const result = await exportPdfMutation.mutateAsync({
+        niche,
+        brandIdentity: blueprintData.brandIdentity,
+        videoPlan: blueprintData.videoPlan,
+        roadmap: blueprintData.roadmap,
+      });
+      window.open(result.url, "_blank");
+      toast.success("PDF vygenerováno! Otevírám ke stažení.");
+    } catch (e: any) {
+      toast.error(e.message || "Chyba při generování PDF");
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   if (!loading && !isAuthenticated) {
     window.location.href = getLoginUrl();
@@ -431,7 +452,14 @@ export default function ChannelBlueprint() {
               </div>
             </div>
 
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-4 flex-wrap">
+              <button
+                onClick={handleExportPdf}
+                disabled={exportingPdf}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold transition-all"
+              >
+                {exportingPdf ? "⏳ Generuji PDF..." : "📄 Exportovat Brand Identity PDF"}
+              </button>
               <button onClick={() => setCurrentPhase(4)} className="px-6 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-all">
                 Pokračovat k Video Plánu →
               </button>
@@ -453,7 +481,14 @@ export default function ChannelBlueprint() {
               ))}
             </div>
 
-            <div className="flex justify-center gap-4 pt-4">
+            <div className="flex justify-center gap-4 pt-4 flex-wrap">
+              <button
+                onClick={handleExportPdf}
+                disabled={exportingPdf}
+                className="flex items-center gap-2 px-5 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white font-bold transition-all"
+              >
+                {exportingPdf ? "⏳ Generuji PDF..." : "📄 Exportovat Video Plán PDF"}
+              </button>
               <button onClick={() => setCurrentPhase(5)} className="px-6 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-all">
                 Zobrazit 90-denní Roadmapu →
               </button>
@@ -514,7 +549,18 @@ export default function ChannelBlueprint() {
               ))}
             </div>
 
-            <div className="flex justify-center gap-4 pt-6">
+            <div className="flex justify-center gap-4 pt-6 flex-wrap">
+              <button
+                onClick={handleExportPdf}
+                disabled={exportingPdf}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 hover:bg-red-500 disabled:opacity-60 text-white font-bold transition-all shadow-lg shadow-red-600/20"
+              >
+                {exportingPdf ? (
+                  <><span className="animate-spin">⏳</span> Generuji PDF...</>
+                ) : (
+                  <>📄 Exportovat celý Blueprint PDF</>
+                )}
+              </button>
               <Link href="/channels">
                 <button className="px-6 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold transition-all">
                   ✓ Blueprint hotov — zpět na Channel Manager

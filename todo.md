@@ -196,3 +196,10 @@
 - [ ] Backend: optimal duration recommendation (8-10 min for monetization)
 - [ ] Frontend: Duration advisor in Studio (warns if < 8 min for YouTube monetization)
 - [ ] Frontend: Monetization tips panel (digital products, affiliate links, AdSense optimization)
+
+## PDF Export — Channel Blueprint & Roadmap
+- [x] Backend: youtube.exportBlueprintPdf procedure — generates PDF from blueprint data, returns S3 URL
+- [x] Frontend: Export PDF button on Brand Identity phase (phase 3)
+- [x] Frontend: Export PDF button on Video Plan phase (phase 4)
+- [x] Frontend: Export PDF button on Roadmap phase (phase 5)
+- [x] Frontend: "Export celý Blueprint" button — exports all phases into one PDF

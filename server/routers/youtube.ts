@@ -2,10 +2,10 @@ import { z } from "zod";
 import { router, protectedProcedure } from "../_core/trpc";
 import { getDb } from "../db";
 import { youtubeChannels, channelPosts, channelBlueprints } from "../../drizzle/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { invokeLLM } from "../_core/llm";
+import { eq, and, desc } from "drizzle-orm";import { invokeLLM } from "../_core/llm";
 import { generateImage } from "../_core/imageGeneration";
-
+import { generatePdfFromHtml, buildBlueprintHtml } from "../pdfGenerator";
+import { storagePut } from "../storage";
 // ─── YouTube OAuth2 Config ───────────────────────────────────────────────────
 const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID || "";
 const YOUTUBE_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET || "";
@@ -796,5 +796,57 @@ export const youtubeRouter = router({
       });
       const c = response.choices[0]?.message?.content;
       return JSON.parse(typeof c === "string" ? c : "{}");
+    }),
+
+  // Export Channel Blueprint to PDF
+  exportBlueprintPdf: protectedProcedure
+    .input(
+      z.object({
+        niche: z.string(),
+        brandIdentity: z.object({
+          channelNames: z.array(z.string()),
+          tagline: z.string(),
+          colors: z.array(z.string()),
+          visualStyle: z.string(),
+          contentTone: z.string(),
+          audiencePersona: z.string(),
+        }),
+        videoPlan: z.object({
+          videos: z.array(
+            z.object({
+              id: z.number(),
+              title: z.string(),
+              description: z.string(),
+              tags: z.array(z.string()),
+              thumbnailText: z.string(),
+              thumbnailVisual: z.string().optional(),
+              chapters: z.array(z.string()),
+              durationMinutes: z.number(),
+              category: z.string(),
+              viralPotential: z.number(),
+            })
+          ),
+        }),
+        roadmap: z.object({
+          weeks: z.array(
+            z.object({
+              week: z.number(),
+              milestone: z.string(),
+              actions: z.array(z.string()),
+              metrics: z.array(z.string()),
+              tips: z.string(),
+            })
+          ),
+          monetizationTimeline: z.string(),
+          keySuccessFactors: z.array(z.string()),
+        }),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const html = buildBlueprintHtml(input);
+      const pdfBuffer = await generatePdfFromHtml(html);
+      const fileKey = `blueprints/${ctx.user.id}-${Date.now()}.pdf`;
+      const { url } = await storagePut(fileKey, pdfBuffer, "application/pdf");
+      return { url, fileKey };
     }),
 });
