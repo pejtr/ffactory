@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `channel_blueprints` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`user_id` int NOT NULL,\n\t`channel_id` int,\n\t`niche` varchar(256) NOT NULL,\n\t`niche_score` int,\n\t`channel_name` varchar(256),\n\t`brand_identity` json,\n\t`video_plan` json,\n\t`roadmap` json,\n\t`posting_cadence` enum('daily','5x_week','3x_week','2x_week','weekly') NOT NULL DEFAULT '3x_week',\n\t`target_language` varchar(16) NOT NULL DEFAULT 'cs',\n\t`status` enum('generating','ready','active','archived') NOT NULL DEFAULT 'generating',\n\t`created_at` timestamp NOT NULL DEFAULT (now()),\n\t`updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `channel_blueprints_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 4VFjuiBDjCy66KV.bcbe7f466b7f --database Mr5EShmAb9yHiZeSQrrR5i --execute CREATE TABLE `channel_blueprints` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`user_id` int NOT NULL,\n\t`channel_id` int,\n\t`niche` varchar(256) NOT NULL,\n\t`niche_score` int,\n\t`channel_name` varchar(256),\n\t`brand_identity` json,\n\t`video_plan` json,\n\t`roadmap` json,\n\t`posting_cadence` enum('daily','5x_week','3x_week','2x_week','weekly') NOT NULL DEFAULT '3x_week',\n\t`target_language` varchar(16) NOT NULL DEFAULT 'cs',\n\t`status` enum('generating','ready','active','archived') NOT NULL DEFAULT 'generating',\n\t`created_at` timestamp NOT NULL DEFAULT (now()),\n\t`updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `channel_blueprints_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 316
+}

@@ -41,6 +41,7 @@ export default function Home() {
                 <Link href="/characters"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><Users className="w-4 h-4 mr-2" />Characters</Button></Link>
                 <Link href="/templates"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><BookOpen className="w-4 h-4 mr-2" />Templates</Button></Link>
                 <Link href="/achievements"><Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground"><Trophy className="w-4 h-4 mr-2" />Achievements</Button></Link>
+                <Link href="/channels"><Button variant="ghost" size="sm" className="text-red-400 hover:text-red-300"><Globe className="w-4 h-4 mr-1" />Kanály</Button></Link>
                 <Link href="/referral"><Button variant="ghost" size="sm" className="text-yellow-400 hover:text-yellow-300">🎁 Pozvat přátele</Button></Link>
                 <Link href="/studio"><Button size="sm" className="glow-blue font-display text-xs tracking-wider">OPEN STUDIO <ChevronRight className="w-4 h-4 ml-1" /></Button></Link>
               </>

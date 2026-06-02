@@ -17,6 +17,9 @@ import ScriptTemplates from "./pages/ScriptTemplates";
 import GamificationDashboard from "./pages/GamificationDashboard";
 import Referral from "./pages/Referral";
 import ReferenceRecreation from "./pages/ReferenceRecreation";
+import ChannelManager from "./pages/ChannelManager";
+import ChannelBlueprint from "./pages/ChannelBlueprint";
+import YouTubeCallback from "./pages/YouTubeCallback";
 import DailyBonusChecker from "./components/DailyBonusChecker";
 
 function Router() {
@@ -35,6 +38,9 @@ function Router() {
       <Route path="/achievements" component={GamificationDashboard} />
       <Route path="/referral" component={Referral} />
       <Route path="/reference-recreation" component={ReferenceRecreation} />
+      <Route path="/channels" component={ChannelManager} />
+      <Route path="/channel-blueprint" component={ChannelBlueprint} />
+      <Route path="/youtube-callback" component={YouTubeCallback} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

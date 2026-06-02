@@ -1,0 +1,41 @@
+CREATE TABLE `channel_posts` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`user_id` int NOT NULL,
+	`project_id` int NOT NULL,
+	`channel_id` int NOT NULL,
+	`youtube_video_id` varchar(64),
+	`title` varchar(256) NOT NULL,
+	`description` text,
+	`tags` text,
+	`language` varchar(16) NOT NULL DEFAULT 'cs',
+	`thumbnail_url` varchar(1000),
+	`status` enum('draft','scheduled','uploading','published','failed') NOT NULL DEFAULT 'draft',
+	`scheduled_at` timestamp,
+	`published_at` timestamp,
+	`error_message` text,
+	`view_count` int NOT NULL DEFAULT 0,
+	`like_count` int NOT NULL DEFAULT 0,
+	`comment_count` int NOT NULL DEFAULT 0,
+	`created_at` timestamp NOT NULL DEFAULT (now()),
+	`updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `channel_posts_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `youtube_channels` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`user_id` int NOT NULL,
+	`channel_id` varchar(64) NOT NULL,
+	`channel_name` varchar(256) NOT NULL,
+	`channel_handle` varchar(128),
+	`thumbnail_url` varchar(1000),
+	`access_token` text NOT NULL,
+	`refresh_token` text NOT NULL,
+	`token_expires_at` int NOT NULL,
+	`subscriber_count` int DEFAULT 0,
+	`video_count` int DEFAULT 0,
+	`view_count` int DEFAULT 0,
+	`is_active` boolean NOT NULL DEFAULT true,
+	`created_at` timestamp NOT NULL DEFAULT (now()),
+	`updated_at` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `youtube_channels_id` PRIMARY KEY(`id`)
+);

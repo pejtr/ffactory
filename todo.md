@@ -138,3 +138,61 @@
 - [ ] "The Trap & Switch" template — 6-scene horror micro-short with Character A/B slots
 - [ ] Template Library — genre-based templates (horror, sci-fi, drama, comedy, educational)
 - [ ] Persona Manager — save reusable character personas for quick template filling
+
+## Channel Empire Mode — YouTube Automation (v5.0)
+- [ ] DB: youtube_channels table (userId, channelId, accessToken, refreshToken, channelName, thumbnailUrl, createdAt)
+- [ ] DB: channel_posts table (projectId, channelId, youtubeVideoId, publishedAt, status, scheduledAt, title, description, tags)
+- [ ] DB: run migration 0010
+- [ ] Backend: YouTube OAuth2 connect/disconnect procedures (PKCE flow, token refresh)
+- [ ] Backend: channel manager CRUD (list, connect, disconnect, getChannelStats)
+- [ ] Backend: SEO metadata AI generation (title, description, tags in target language via LLM)
+- [ ] Backend: thumbnail generation (AI image from scene prompt + title overlay)
+- [ ] Backend: YouTube resumable upload procedure (MP4 + thumbnail + metadata)
+- [ ] Backend: multi-language pipeline (translate script to 5 languages + native ElevenLabs TTS)
+- [ ] Frontend: Channel Manager page (/channels) — connect YouTube, manage channels, posting schedule, stats
+- [ ] Frontend: Project publish flow — SEO preview, thumbnail preview, language selector, publish to YouTube button
+- [ ] Frontend: nav link "Kanály" in Home.tsx
+- [ ] Scheduled: Heartbeat cron job for daily video generation + auto-upload
+- [ ] Tests: youtube.test.ts
+- [ ] TypeScript: 0 errors check
+
+## Channel Empire — Best Practices Integration (from YouTube automation video)
+
+### Phase 1: Channel Blueprint AI Generator
+- [x] Backend: youtube.generateBlueprint procedure — AI generates full 30-video content plan from niche
+- [x] Backend: youtube.validateNiche procedure — checks Google Trends data for niche viability
+- [x] Backend: youtube.generate90DayPlan procedure — milestone-based 90-day growth roadmap
+- [x] DB: channel_blueprints table (channelId, niche, videoPlan JSON, roadmap JSON, brandIdentity JSON)
+- [x] DB: run blueprint migration
+
+### Phase 2: Enhanced SEO System
+- [x] Backend: youtube.generateSEO enhanced — includes chapters/timestamps, hashtag block, CTA templates
+- [x] Backend: youtube.generateThumbnailVariants — generates 2-3 A/B test thumbnail options
+- [x] Backend: youtube.generateDescription — structured description with hook + bullet points + timestamps + hashtags
+- [ ] Frontend: SEO Editor with live preview (title char count, description sections, tag pills)
+- [ ] Frontend: Thumbnail A/B picker — show 3 variants, user picks or lets YouTube A/B test
+
+### Phase 3: Channel Blueprint Wizard (5-Phase Pipeline UI)
+- [x] Frontend: /channel-blueprint page — step-by-step wizard matching the 5-phase pipeline
+- [x] Step 1: Niche Validator (input niche → AI validates demand + competition)
+- [x] Step 2: Blueprint Generator (30 video ideas with SEO metadata for each)
+- [x] Step 3: Brand Identity (AI logo + banner + channel name suggestions)
+- [ ] Step 4: Video Production Queue (batch generate from blueprint topics)
+- [ ] Step 5: Auto-Publish Pipeline (schedule + upload + SEO + thumbnail)
+
+### Phase 4: Posting Cadence & Scheduler
+- [ ] Backend: youtube.setPostingSchedule procedure — define cadence (daily/3x week/5x week)
+- [ ] Backend: youtube.getNextScheduledSlots — returns upcoming posting slots
+- [ ] Frontend: Posting Calendar view — visual weekly schedule with drag-drop videos
+- [ ] Frontend: Cadence selector (1x/day, 3-5x/week) with AI recommendation
+
+### Phase 5: Content Quality & Compliance
+- [ ] Backend: youtube.checkUniqueness — AI validates video script is unique (not repetitive)
+- [ ] Backend: youtube.policyCheck — flags potential YouTube policy violations before upload
+- [ ] Frontend: Pre-publish checklist (uniqueness score, policy compliance, SEO completeness)
+- [ ] Frontend: Warning badges on videos that may violate YouTube policies
+
+### Phase 6: Video Length & Monetization Optimization
+- [ ] Backend: optimal duration recommendation (8-10 min for monetization)
+- [ ] Frontend: Duration advisor in Studio (warns if < 8 min for YouTube monetization)
+- [ ] Frontend: Monetization tips panel (digital products, affiliate links, AdSense optimization)

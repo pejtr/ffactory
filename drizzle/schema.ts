@@ -415,3 +415,69 @@ export const userAchievements = mysqlTable("user_achievements", {
 });
 export type UserAchievement = typeof userAchievements.$inferSelect;
 export type InsertUserAchievement = typeof userAchievements.$inferInsert;
+
+// ─── YouTube Channel Manager ──────────────────────────────────────────────────
+export const youtubeChannels = mysqlTable("youtube_channels", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull(),
+  channelId: varchar("channel_id", { length: 64 }).notNull(),
+  channelName: varchar("channel_name", { length: 256 }).notNull(),
+  channelHandle: varchar("channel_handle", { length: 128 }),
+  thumbnailUrl: varchar("thumbnail_url", { length: 1000 }),
+  accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token").notNull(),
+  tokenExpiresAt: int("token_expires_at").notNull(),
+  subscriberCount: int("subscriber_count").default(0),
+  videoCount: int("video_count").default(0),
+  viewCount: int("view_count").default(0),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type YoutubeChannel = typeof youtubeChannels.$inferSelect;
+export type InsertYoutubeChannel = typeof youtubeChannels.$inferInsert;
+
+// ─── Channel Posts (YouTube uploads) ─────────────────────────────────────────
+export const channelPosts = mysqlTable("channel_posts", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull(),
+  projectId: int("project_id").notNull(),
+  channelId: int("channel_id").notNull(), // FK to youtube_channels.id
+  youtubeVideoId: varchar("youtube_video_id", { length: 64 }),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description"),
+  tags: text("tags"), // JSON array of strings
+  language: varchar("language", { length: 16 }).default("cs").notNull(),
+  thumbnailUrl: varchar("thumbnail_url", { length: 1000 }),
+  status: mysqlEnum("status", ["draft", "scheduled", "uploading", "published", "failed"]).default("draft").notNull(),
+  scheduledAt: timestamp("scheduled_at"),
+  publishedAt: timestamp("published_at"),
+  errorMessage: text("error_message"),
+  viewCount: int("view_count").default(0).notNull(),
+  likeCount: int("like_count").default(0).notNull(),
+  commentCount: int("comment_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type ChannelPost = typeof channelPosts.$inferSelect;
+export type InsertChannelPost = typeof channelPosts.$inferInsert;
+
+// ─── Channel Blueprints (AI-generated content plans) ─────────────────────────
+export const channelBlueprints = mysqlTable("channel_blueprints", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("user_id").notNull(),
+  channelId: int("channel_id"), // optional FK to youtube_channels.id
+  niche: varchar("niche", { length: 256 }).notNull(),
+  nicheScore: int("niche_score"), // 0-100 viability score
+  channelName: varchar("channel_name", { length: 256 }),
+  brandIdentity: json("brand_identity"), // { logo, banner, colors, tone }
+  videoPlan: json("video_plan"), // Array of 30 video ideas with SEO metadata
+  roadmap: json("roadmap"), // 90-day milestone plan
+  postingCadence: mysqlEnum("posting_cadence", ["daily", "5x_week", "3x_week", "2x_week", "weekly"]).default("3x_week").notNull(),
+  targetLanguage: varchar("target_language", { length: 16 }).default("cs").notNull(),
+  status: mysqlEnum("status", ["generating", "ready", "active", "archived"]).default("generating").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type ChannelBlueprint = typeof channelBlueprints.$inferSelect;
+export type InsertChannelBlueprint = typeof channelBlueprints.$inferInsert;
