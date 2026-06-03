@@ -20,6 +20,7 @@ import ReferenceRecreation from "./pages/ReferenceRecreation";
 import ChannelManager from "./pages/ChannelManager";
 import ChannelBlueprint from "./pages/ChannelBlueprint";
 import YouTubeCallback from "./pages/YouTubeCallback";
+import AgentsDashboard from "./pages/AgentsDashboard";
 import DailyBonusChecker from "./components/DailyBonusChecker";
 
 function Router() {
@@ -41,6 +42,7 @@ function Router() {
       <Route path="/channels" component={ChannelManager} />
       <Route path="/channel-blueprint" component={ChannelBlueprint} />
       <Route path="/youtube-callback" component={YouTubeCallback} />
+      <Route path="/admin/agents" component={AgentsDashboard} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

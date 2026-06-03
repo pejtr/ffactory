@@ -1,17 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock invokeLLM
-vi.mock("./server/_core/llm", () => ({
+vi.mock("./_core/llm", () => ({
   invokeLLM: vi.fn(),
 }));
 
 // Mock generateImage
-vi.mock("./server/_core/imageGeneration", () => ({
+vi.mock("./_core/imageGeneration", () => ({
   generateImage: vi.fn(),
 }));
 
 // Mock getDb
-vi.mock("./server/db", () => ({
+vi.mock("./db", () => ({
   getDb: vi.fn(),
 }));
 

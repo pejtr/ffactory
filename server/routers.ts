@@ -30,6 +30,7 @@ import { gamificationRouter } from "./routers/gamification";
 import { referralRouter } from "./routers/referral";
 import { referenceRecreationRouter } from "./routers/referenceRecreation";
 import { youtubeRouter } from "./routers/youtube";
+import { agentsRouter } from "./routers/agents";
 
 export const appRouter = router({
   system: systemRouter,
@@ -39,6 +40,7 @@ export const appRouter = router({
   referral: referralRouter,
   refRecreation: referenceRecreationRouter,
   youtube: youtubeRouter,
+  agents: agentsRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

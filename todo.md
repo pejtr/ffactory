@@ -203,3 +203,43 @@
 - [x] Frontend: Export PDF button on Video Plan phase (phase 4)
 - [x] Frontend: Export PDF button on Roadmap phase (phase 5)
 - [x] Frontend: "Export celý Blueprint" button — exports all phases into one PDF
+
+## MAGS — Multi-Agent Autonomous Growth System + LeadOS Integration
+
+### Phase 1 — DB Schema
+- [x] DB: agent_decisions table (agent_name, run_id, decision_type, source, title, reasoning, impact, confidence, status, metadata JSON)
+- [x] DB: agent_runs table (agent_name, run_id, status, duration_ms, decisions_count, applied_count, score, summary, metrics_snapshot JSON)
+- [x] DB: orchestrator_runs table (run_id UNIQUE, triggered_by, overall_score, total_decisions, applied_decisions, pending_decisions, summary, agent_results JSON)
+- [x] DB: agent_thresholds table (agent_name, rule_id, value, updated_by, reason, updated_at)
+- [x] DB: run migration for all MAGS tables
+
+### Phase 2 — Shared Infrastructure
+- [x] server/agents/agentBase.ts — abstract AgentBase class (run, applyRules, analyzeWithAI, executeDecision, computeScore)
+- [x] server/agents/rulesEngine.ts — RulesEngine<TMetrics> (register, evaluate, priority-based)
+- [x] server/agents/decisionLog.ts — DecisionLog (save, getPending, approve, reject, getHistory)
+- [x] server/agents/sharedMetrics.ts — SharedVideoMetrics (single DB query shared by all agents)
+
+### Phase 3 — Agents
+- [x] server/agents/videoAgent.ts — stalled jobs, quality scores, pipeline failures (schedule: every 1h)
+- [x] server/agents/channelAgent.ts — posting gaps, CTR alerts, subscriber drops (schedule: every 6h)
+- [x] server/agents/contentCalendarAgent.ts — queue management, auto-generate calendar (schedule: daily 20:00)
+- [x] server/agents/thumbnailABAgent.ts — A/B winner detection, rotate losers (schedule: every 12h)
+- [x] server/agents/blueprintAgent.ts — blueprint execution rate, niche decay (schedule: daily 08:00)
+
+### Phase 4 — Orchestrator + LeadOS
+- [x] server/agents/orchestrator.ts — AgentOrchestrator (parallel/sequential groups, health score, notifyOwner)
+- [x] server/agents/orchestrator.ts — Heartbeat cron endpoint POST /api/scheduled/mags-orchestrator
+- [x] server/routers/agents.ts — tRPC procedures (listDecisions, approveDecision, rejectDecision, triggerAgent, runFull, getReport, updateThreshold, getOrchestratorRuns)
+- [x] POST /api/agents/webhook — LeadOS inbound (run_agent, approve_decision, reject_decision, get_report, run_full)
+- [x] LeadOS outbound push — mags_cycle_complete event after each cycle
+
+### Phase 5 — Admin Dashboard
+- [x] Frontend: /admin/agents route registered in App.tsx
+- [x] Frontend: AgentsDashboard.tsx — MAGS Command Center page
+- [x] Frontend: Overall Health Score gauge (0-100) with color indicator
+- [x] Frontend: Per-agent cards (score, last run, decisions count, [Trigger], [Details])
+- [x] Frontend: Pending Approvals queue with [Approve] / [Reject] buttons
+- [x] Frontend: Decision History timeline with reasoning + confidence
+- [x] Frontend: [Run All] button for manual full cycle trigger
+- [x] Frontend: LeadOS webhook URL configuration in Settings panel
+- [x] Frontend: Nav link "🤖 MAGS" in Home.tsx header

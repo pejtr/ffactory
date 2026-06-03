@@ -481,3 +481,94 @@ export const channelBlueprints = mysqlTable("channel_blueprints", {
 });
 export type ChannelBlueprint = typeof channelBlueprints.$inferSelect;
 export type InsertChannelBlueprint = typeof channelBlueprints.$inferInsert;
+
+// ─── MAGS — Multi-Agent Autonomous Growth System ──────────────────────────────
+
+// Every decision made by every agent (with reasoning, confidence, audit trail)
+export const agentDecisions = mysqlTable("agent_decisions", {
+  id: int("id").autoincrement().primaryKey(),
+  agentName: varchar("agent_name", { length: 64 }).notNull(),
+  runId: varchar("run_id", { length: 128 }).notNull(),
+  decisionType: mysqlEnum("decision_type", [
+    "pause", "scale", "create", "update", "alert", "approve", "reject", "recommend",
+  ]).notNull(),
+  source: mysqlEnum("source", ["rules", "ai", "hybrid"]).notNull(),
+  title: varchar("title", { length: 256 }).notNull(),
+  reasoning: text("reasoning").notNull(),
+  impact: varchar("impact", { length: 256 }),
+  confidence: int("confidence").default(50).notNull(), // 0-100
+  status: mysqlEnum("status", [
+    "applied", "pending", "approved", "rejected", "superseded",
+  ]).default("pending").notNull(),
+  metadata: json("metadata"),
+  approvedBy: varchar("approved_by", { length: 128 }),
+  rejectedReason: text("rejected_reason"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  appliedAt: timestamp("applied_at"),
+});
+export type AgentDecision = typeof agentDecisions.$inferSelect;
+export type InsertAgentDecision = typeof agentDecisions.$inferInsert;
+
+// Every run of every agent (performance tracking)
+export const agentRuns = mysqlTable("agent_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  agentName: varchar("agent_name", { length: 64 }).notNull(),
+  runId: varchar("run_id", { length: 128 }).notNull(),
+  status: mysqlEnum("status", ["success", "error", "skipped"]).notNull(),
+  durationMs: int("duration_ms"),
+  decisionsCount: int("decisions_count").default(0).notNull(),
+  appliedCount: int("applied_count").default(0).notNull(),
+  score: int("score").default(50).notNull(), // 0-100 health score
+  summary: text("summary"),
+  metricsSnapshot: json("metrics_snapshot"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+export type AgentRun = typeof agentRuns.$inferSelect;
+export type InsertAgentRun = typeof agentRuns.$inferInsert;
+
+// Every orchestrator cycle (full system health)
+export const orchestratorRuns = mysqlTable("orchestrator_runs", {
+  id: int("id").autoincrement().primaryKey(),
+  runId: varchar("run_id", { length: 128 }).notNull().unique(),
+  triggeredBy: mysqlEnum("triggered_by", ["cron", "manual", "leadOS", "event"]).notNull(),
+  overallScore: int("overall_score").default(50).notNull(), // 0-100 weighted average
+  totalDecisions: int("total_decisions").default(0).notNull(),
+  appliedDecisions: int("applied_decisions").default(0).notNull(),
+  pendingDecisions: int("pending_decisions").default(0).notNull(),
+  summary: text("summary"),
+  agentResults: json("agent_results"), // per-agent scores + decision counts
+  alerts: json("alerts"), // [{ agent, message, severity }]
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  finishedAt: timestamp("finished_at"),
+});
+export type OrchestratorRun = typeof orchestratorRuns.$inferSelect;
+export type InsertOrchestratorRun = typeof orchestratorRuns.$inferInsert;
+
+// Dynamic threshold overrides (LeadOS can update these)
+export const agentThresholds = mysqlTable("agent_thresholds", {
+  id: int("id").autoincrement().primaryKey(),
+  agentName: varchar("agent_name", { length: 64 }).notNull(),
+  ruleId: varchar("rule_id", { length: 32 }).notNull(),
+  value: float("value").notNull(),
+  updatedBy: varchar("updated_by", { length: 128 }).default("system").notNull(),
+  reason: text("reason"),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type AgentThreshold = typeof agentThresholds.$inferSelect;
+export type InsertAgentThreshold = typeof agentThresholds.$inferInsert;
+
+// LeadOS configuration (webhook URL, API key, enabled flag)
+export const leadosConfig = mysqlTable("leados_config", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull().unique(),
+  webhookUrl: varchar("webhook_url", { length: 512 }),
+  apiKey: varchar("api_key", { length: 256 }),
+  enabled: boolean("enabled").default(false).notNull(),
+  lastPushAt: timestamp("last_push_at"),
+  lastPushStatus: mysqlEnum("last_push_status", ["success", "failed"]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type LeadosConfig = typeof leadosConfig.$inferSelect;
+export type InsertLeadosConfig = typeof leadosConfig.$inferInsert;
