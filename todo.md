@@ -1,245 +1,425 @@
-# Video Factory — Hollywood AI Studio TODO
+# 📋 Video Factory v2.0 — Implementation Roadmap
 
-## Phase 1: Database Schema & API Secrets
-- [x] Add KLING_ACCESS_KEY and KLING_SECRET_KEY secrets
-- [x] Add KIE_API_KEY secret (Music + unified)
-- [x] Add ELEVENLABS_API_KEY secret
-- [x] Add FAL_API_KEY secret (WAN 2.2, Hailuo, Pika via fal.ai)
-- [x] Create DB schema: video_projects, scenes, characters, audio_tracks tables
-- [x] Run DB migration
+## 🎯 Current Status
 
-## Phase 2: Backend — Gemini Screenplay Engine
-- [x] Implement Gemini screenplay generator (emotional arc, scene breakdown)
-- [x] Implement smart scene router (dialogue → Kling Omni, B-roll → Hailuo, lip sync → WAN 2.2 S2V)
-- [x] Implement Kling 3.0 Omni API (native audio + video, JWT auth)
-- [x] Implement Hailuo MiniMax 2.3 API via fal.ai (cinematic B-roll)
-- [x] Implement WAN 2.2 Speech-to-Video API via fal.ai (lip sync)
-- [x] Implement Kling Motion Control API (character animation)
-- [x] Implement Kie.ai Music generation API (Suno)
-- [x] Implement ElevenLabs TTS + SFX + voice list API
-- [x] Implement video pipeline orchestrator (scenes + audio parallel)
-- [x] Implement project status/progress tracking (polling)
+**Version:** 5da8549e (MAGS + PDF Export)  
+**TypeScript:** 0 errors ✓  
+**Tests:** 58/58 passing ✓  
+**Implemented Features:** 35+  
+**Database Tables:** 50+  
 
-## Phase 3: Frontend — Hollywood Studio UI
-- [x] Dark cinematic theme (Stargate Atlantis / Hollywood inspired)
-- [x] Landing page with Video Factory hero section
-- [x] Studio page: idea input, genre, emotion, duration, dream mode
-- [x] Screenplay preview (scene breakdown, model badges, cost estimate)
-- [x] Real-time project tracker (scene pipeline, status badges)
-- [x] Characters page (Soul Cinema system)
-- [x] Shareable video page (public link)
-- [x] Cost estimator (show price before generating)
+---
 
-## Phase 0: Test Project — Stargate: Legacy (SG-1 + Atlantis + Universe tech)
-- [ ] Design pilot episode: SG-1 & Atlantis characters discover Destiny-class long-range travel tech
-- [ ] Story: O'Neill, Carter, Sheppard, McKay + new crew activate ancient long-range gate bridge
-- [ ] Scene 1: SGC briefing room — dialogue (Kling 3.0 Omni native audio)
-- [ ] Scene 2: Stargate activation + wormhole travel — cinematic B-roll (Hailuo MiniMax 2.3)
-- [ ] Scene 3: Atlantis gate room — dialogue + emotion (Kling 3.0 Omni)
-- [ ] Scene 4: Deep space — Destiny-class ship exterior (Hailuo MiniMax 2.3 B-roll)
-- [ ] Scene 5: Alien encounter — action + motion control (Kling Motion Control)
-- [ ] Scene 6: Emotional resolution — WAN 2.2 S2V lip sync
-- [ ] BGM: Epic orchestral Hans Zimmer / Joel Goldsmith style (Kie.ai Music)
-- [ ] Assemble pilot episode and generate shareable link
+## ✅ COMPLETED PHASES
 
-## Soul Cinema System (Higgsfield Soul alternative)
-- [x] Character profile manager (name, description, personality, voice)
-- [x] Soul ID generation via AI image generation (consistent character portrait)
-- [x] Character voice assignment (ElevenLabs voice per character)
-- [ ] Character consistency across scenes (reference image injection)
-- [ ] Multi-character scenes (Sheppard + McKay + Carter in same frame)
-- [ ] Emotion layer per character per scene
-- [ ] Character memory (remembers appearance across entire episode)
+### Phase 1: YouTube Integration
+- [x] YouTube OAuth2 flow
+- [x] Channel CRUD (connect, list, disconnect)
+- [x] Video posting to YouTube
+- [x] Channel analytics + metrics
+- [x] SEO generation (titles, descriptions, tags)
+- [x] Thumbnail generation (A/B variants)
+- [x] Translation support (Czech, English, German)
 
-## Phase 4: Tests & Polish
-- [x] Vitest tests for all backend procedures (14/14 passing)
-- [ ] Mobile responsive design polish
-- [ ] Projects gallery / history dashboard
-- [ ] Scene editor (manual override of model per scene)
-- [ ] Checkpoint and deploy
+### Phase 2: Channel Blueprint
+- [x] Niche validator (AI scoring 0-100)
+- [x] 30-video content plan generator
+- [x] 90-day growth roadmap
+- [x] Brand identity generator (names, colors, tagline)
+- [x] Policy compliance checker
+- [x] PDF export (all phases)
 
-## Soul Cinema — Referenční fotky
-- [ ] Backend: S3 upload endpoint pro referenční fotky charakterů
-- [ ] Backend: updateCharacterReferenceImage DB helper
-- [ ] Frontend: drag&drop foto upload v Characters stránce
-- [ ] Frontend: náhled nahraté fotky + možnost změnit
-- [ ] Soul ID generátor používá referenční fotku jako základ
+### Phase 3: MAGS (Multi-Agent Growth System)
+- [x] DB schema (5 MAGS tables)
+- [x] RulesEngine + DecisionLog
+- [x] VideoAgent (stalled jobs, quality scores)
+- [x] ChannelAgent (posting gaps, CTR alerts)
+- [x] ContentCalendarAgent (queue management)
+- [x] ThumbnailABAgent (A/B winner detection)
+- [x] BlueprintAgent (execution tracking)
+- [x] AgentOrchestrator (parallel execution)
+- [x] Heartbeat cron (every 6 hours)
+- [x] LeadOS webhook integration
+- [x] MAGS Command Center dashboard
 
-## Překlad do češtiny
-- [ ] Home.tsx — česky
-- [ ] Studio.tsx — česky
-- [ ] ProjectView.tsx — česky
-- [ ] Characters.tsx — česky
-- [ ] SharedVideo.tsx — česky
-- [ ] NotFound.tsx — česky
+### Phase 4: PuLID Character Lock
+- [x] fal.ai PuLID integration
+- [x] Character-consistent video generation
+- [x] Avatar generator for channel mascot
+- [x] ThumbnailAB upgrade (same face across variants)
 
-## AI Chatbot průvodce (Lucie)
-- [ ] Backend: tRPC chatbot endpoint se streamingem (Gemini)
-- [ ] Chatbot zná kontext aplikace (jak funguje pipeline, co jsou modely, Soul Cinema)
-- [ ] Plovoucí chatbot panel (pravý dolní roh) — vždy dostupný
-- [ ] Kontextové nápovědy dle aktuální stránky
-- [ ] Krok-za-krokem průvodce: idea → screenplay → video → sdílení
-- [ ] Navrhuje příkazy a tipy pro Stargate: Legacy pilot
+### Phase 5: PDF Export
+- [x] Puppeteer-core PDF generation
+- [x] Blueprint PDF export (all phases)
+- [x] Roadmap PDF export
+- [x] Cover page + styling
 
-## Intuitivní redesign (v2.0)
-- [ ] Studio wizard: krok-za-krokem (Krok 1: Nápad → Krok 2: Styl → Krok 3: Scénář → Krok 4: Vytvořit)
-- [ ] Vizuální progress indikátor kroků nahoře
-- [ ] Inline nápovědy a placeholder texty v češtině
-- [ ] Celé UI přeloženo do češtiny
-- [ ] AI chatbot Lucie — plovoucí panel vpravo dole, streaming odpovědi
-- [ ] Lucie zná celý kontext aplikace a navádí krok za krokem
-- [ ] Soul Cinema: drag&drop foto upload s náhledem
+---
 
-## Soul Cinema — Multi-foto (v2.0)
-- [ ] DB schema: referenceImages jako JSON array (až 5 fotek) + isMultiView flag
-- [ ] Backend: upload endpoint pro více fotek najednou (S3) + detekce multi-view sheetu
-- [ ] Frontend: multi-foto upload UI (přední pohled, boční, detail obličeje, různé výrazy, volitelná 5.)
-- [ ] Podpora "character sheet" — jedna fotka se 4 záběry z různých úhlů (nejlepší konzistence)
-- [ ] Automatické označení multi-view sheetu při uploadu
-- [ ] Foto galerie s možností mazání jednotlivých fotek
-- [ ] Soul ID generátor kombinuje všechny referenční fotky / character sheet pro maximální konzistenci
-- [ ] Tip v UI: doporučení nahrát character sheet pro nejlepší výsledky
+## 🔄 NEXT PHASES (Priority Order)
 
-## Viral Score Widget + Hook Template Library (v2.5)
-- [ ] Backend: story.sources.analyze vrací viralScore (0-10) + hookPatterns pole
-- [ ] Backend: story.hooks.list + story.hooks.useInScript procedury
-- [ ] DB: hook_templates tabulka (category, template, example, viralScore)
-- [ ] Frontend: ViralScoreGauge SVG komponenta (kruhový gauge s animací)
-- [ ] Frontend: Sources Manager - viral score badge + gauge pro každý zdroj
-- [ ] Frontend: Hook Template Library panel v NotebookDetail (filtry, kategorie, copy-to-script)
-- [ ] Frontend: Channel comparison view - porovnání viral score napříč zdroji
+### Phase 6: Timeline Editor (Story Liner integration)
+**Duration:** 8–10 days  
+**Modules:** FFmpeg wrapper, React UI, effects, rendering
 
-## Referral System (v3.0)
-- [x] DB: add referral_code column to users table + create referrals table
-- [x] DB: run migration 0007
-- [x] Backend: referral router (getMyCode, getStats, applyCode)
-- [x] Backend: register referral router in routers.ts
-- [x] Backend: REFERRAL_REWARD constant (50 credits) in db.ts
-- [x] Frontend: /referral page (link display, copy/share, stats, how-it-works)
-- [x] Frontend: route + nav link "Pozvat přátele" in Home.tsx
-- [x] OAuth: auto-apply referral code from URL param on new user registration
-- [x] Tests: referral.test.ts
-- [x] TypeScript: 0 errors check
+- [ ] FFmpeg wrapper for server-side rendering
+- [ ] React drag-and-drop timeline UI
+- [ ] Clip trimming, transitions, effects
+- [ ] Watermark + branding overlay
+- [ ] Text overlay + color grading
+- [ ] Real-time preview
+- [ ] Batch rendering queue
+- [ ] Performance optimization
+- [ ] Vitest tests (15+ tests)
 
-## Persistence / Memory (v4.0)
-- [ ] Studio form: save all wizard fields to localStorage on every change
-- [ ] Studio form: restore fields on mount (per-user key)
-- [ ] Studio form: clear localStorage after successful project creation
-- [ ] ProjectView: remember last active project ID in localStorage
-- [ ] ProjectView: auto-redirect to last project on Studio open if generating
-- [ ] ProjectView: resume polling immediately after refresh if status is generating
+**Files to create:**
+- `server/ffmpegRenderer.ts` — FFmpeg wrapper
+- `server/routers/timeline.ts` — tRPC procedures
+- `client/src/pages/TimelineEditor.tsx` — React UI
+- `drizzle/migrations/0013_timeline_tables.sql` — DB schema
 
-## Cynema AI Features + Script Templates (v3.0)
-- [ ] Scene-Based Editor — edit individual scenes after generation (prompt, model, duration, camera)
-- [ ] Multi-format Export presets — 16:9 YouTube, 9:16 TikTok/Shorts, 1:1 Instagram
-- [ ] Camera Motion presets — dolly, pan, tilt, orbit, FPV drone, handheld
-- [ ] AI Sound Design — auto-select music + SFX based on scene mood
-- [ ] Script Templates page — parametric templates with persona slots
-- [ ] "The Trap & Switch" template — 6-scene horror micro-short with Character A/B slots
-- [ ] Template Library — genre-based templates (horror, sci-fi, drama, comedy, educational)
-- [ ] Persona Manager — save reusable character personas for quick template filling
+---
 
-## Channel Empire Mode — YouTube Automation (v5.0)
-- [ ] DB: youtube_channels table (userId, channelId, accessToken, refreshToken, channelName, thumbnailUrl, createdAt)
-- [ ] DB: channel_posts table (projectId, channelId, youtubeVideoId, publishedAt, status, scheduledAt, title, description, tags)
-- [ ] DB: run migration 0010
-- [ ] Backend: YouTube OAuth2 connect/disconnect procedures (PKCE flow, token refresh)
-- [ ] Backend: channel manager CRUD (list, connect, disconnect, getChannelStats)
-- [ ] Backend: SEO metadata AI generation (title, description, tags in target language via LLM)
-- [ ] Backend: thumbnail generation (AI image from scene prompt + title overlay)
-- [ ] Backend: YouTube resumable upload procedure (MP4 + thumbnail + metadata)
-- [ ] Backend: multi-language pipeline (translate script to 5 languages + native ElevenLabs TTS)
-- [ ] Frontend: Channel Manager page (/channels) — connect YouTube, manage channels, posting schedule, stats
-- [ ] Frontend: Project publish flow — SEO preview, thumbnail preview, language selector, publish to YouTube button
-- [ ] Frontend: nav link "Kanály" in Home.tsx
-- [ ] Scheduled: Heartbeat cron job for daily video generation + auto-upload
-- [ ] Tests: youtube.test.ts
-- [ ] TypeScript: 0 errors check
+### Phase 7: Multi-platform Posting
+**Duration:** 12–15 days  
+**Modules:** TikTok, Instagram, X, Fanvue, OnlyFans APIs
 
-## Channel Empire — Best Practices Integration (from YouTube automation video)
+- [ ] TikTok API integration (OAuth + video upload)
+- [ ] Instagram Graph API integration (Reels + Stories)
+- [ ] X (Twitter) API integration (video tweets)
+- [ ] Fanvue API integration (post scheduling)
+- [ ] OnlyFans backup integration
+- [ ] Cross-platform scheduler (timezone-aware)
+- [ ] Metrics aggregator (views, likes, comments, shares)
+- [ ] Post performance analytics
+- [ ] Vitest tests (20+ tests)
 
-### Phase 1: Channel Blueprint AI Generator
-- [x] Backend: youtube.generateBlueprint procedure — AI generates full 30-video content plan from niche
-- [x] Backend: youtube.validateNiche procedure — checks Google Trends data for niche viability
-- [x] Backend: youtube.generate90DayPlan procedure — milestone-based 90-day growth roadmap
-- [x] DB: channel_blueprints table (channelId, niche, videoPlan JSON, roadmap JSON, brandIdentity JSON)
-- [x] DB: run blueprint migration
+**Files to create:**
+- `server/routers/posting.ts` — tRPC procedures
+- `server/integrations/tiktok.ts` — TikTok API wrapper
+- `server/integrations/instagram.ts` — Instagram API wrapper
+- `server/integrations/x.ts` — X API wrapper
+- `server/integrations/fanvue.ts` — Fanvue API wrapper
+- `client/src/pages/MultiPlatformPosting.tsx` — React UI
+- `drizzle/migrations/0014_multi_platform_tables.sql` — DB schema
 
-### Phase 2: Enhanced SEO System
-- [x] Backend: youtube.generateSEO enhanced — includes chapters/timestamps, hashtag block, CTA templates
-- [x] Backend: youtube.generateThumbnailVariants — generates 2-3 A/B test thumbnail options
-- [x] Backend: youtube.generateDescription — structured description with hook + bullet points + timestamps + hashtags
-- [ ] Frontend: SEO Editor with live preview (title char count, description sections, tag pills)
-- [ ] Frontend: Thumbnail A/B picker — show 3 variants, user picks or lets YouTube A/B test
+---
 
-### Phase 3: Channel Blueprint Wizard (5-Phase Pipeline UI)
-- [x] Frontend: /channel-blueprint page — step-by-step wizard matching the 5-phase pipeline
-- [x] Step 1: Niche Validator (input niche → AI validates demand + competition)
-- [x] Step 2: Blueprint Generator (30 video ideas with SEO metadata for each)
-- [x] Step 3: Brand Identity (AI logo + banner + channel name suggestions)
-- [ ] Step 4: Video Production Queue (batch generate from blueprint topics)
-- [ ] Step 5: Auto-Publish Pipeline (schedule + upload + SEO + thumbnail)
+### Phase 8: AI Chatbot (24/7 Monetization)
+**Duration:** 10–12 days  
+**Modules:** Fanvue webhook, LLM responses, PPV automation
 
-### Phase 4: Posting Cadence & Scheduler
-- [ ] Backend: youtube.setPostingSchedule procedure — define cadence (daily/3x week/5x week)
-- [ ] Backend: youtube.getNextScheduledSlots — returns upcoming posting slots
-- [ ] Frontend: Posting Calendar view — visual weekly schedule with drag-drop videos
-- [ ] Frontend: Cadence selector (1x/day, 3-5x/week) with AI recommendation
+- [ ] Fanvue message webhook receiver
+- [ ] 6 personality modes (nurturing, dominant, mysterious, vulnerable, playful, sensual)
+- [ ] Auto-response engine (50+ templates)
+- [ ] PPV menu automation (smart upselling)
+- [ ] Voice note generation (Kling AI)
+- [ ] Tip reaction automation
+- [ ] Retention sequences (3-7-14 day follow-ups)
+- [ ] OnlyFans DM automation
+- [ ] Vitest tests (18+ tests)
 
-### Phase 5: Content Quality & Compliance
-- [ ] Backend: youtube.checkUniqueness — AI validates video script is unique (not repetitive)
-- [ ] Backend: youtube.policyCheck — flags potential YouTube policy violations before upload
-- [ ] Frontend: Pre-publish checklist (uniqueness score, policy compliance, SEO completeness)
-- [ ] Frontend: Warning badges on videos that may violate YouTube policies
+**Files to create:**
+- `server/routers/chatbot.ts` — tRPC procedures
+- `server/agents/chatbotAgent.ts` — Chatbot logic
+- `server/_core/webhooks.ts` — Fanvue webhook handler
+- `client/src/pages/ChatbotConfig.tsx` — React UI
+- `drizzle/migrations/0015_chatbot_tables.sql` — DB schema
 
-### Phase 6: Video Length & Monetization Optimization
-- [ ] Backend: optimal duration recommendation (8-10 min for monetization)
-- [ ] Frontend: Duration advisor in Studio (warns if < 8 min for YouTube monetization)
-- [ ] Frontend: Monetization tips panel (digital products, affiliate links, AdSense optimization)
+---
 
-## PDF Export — Channel Blueprint & Roadmap
-- [x] Backend: youtube.exportBlueprintPdf procedure — generates PDF from blueprint data, returns S3 URL
-- [x] Frontend: Export PDF button on Brand Identity phase (phase 3)
-- [x] Frontend: Export PDF button on Video Plan phase (phase 4)
-- [x] Frontend: Export PDF button on Roadmap phase (phase 5)
-- [x] Frontend: "Export celý Blueprint" button — exports all phases into one PDF
+### Phase 9: Trending Audio Detector
+**Duration:** 6–8 days  
+**Modules:** TikTok, Spotify, Instagram APIs
 
-## MAGS — Multi-Agent Autonomous Growth System + LeadOS Integration
+- [ ] TikTok trending sounds API polling
+- [ ] Spotify viral tracks API polling
+- [ ] Instagram trending audio API polling
+- [ ] Hourly detection cron job
+- [ ] Audio caching + deduplication
+- [ ] Suggestion engine for projects
+- [ ] Audio matching in timeline
+- [ ] Vitest tests (10+ tests)
 
-### Phase 1 — DB Schema
-- [x] DB: agent_decisions table (agent_name, run_id, decision_type, source, title, reasoning, impact, confidence, status, metadata JSON)
-- [x] DB: agent_runs table (agent_name, run_id, status, duration_ms, decisions_count, applied_count, score, summary, metrics_snapshot JSON)
-- [x] DB: orchestrator_runs table (run_id UNIQUE, triggered_by, overall_score, total_decisions, applied_decisions, pending_decisions, summary, agent_results JSON)
-- [x] DB: agent_thresholds table (agent_name, rule_id, value, updated_by, reason, updated_at)
-- [x] DB: run migration for all MAGS tables
+**Files to create:**
+- `server/routers/audio.ts` — tRPC procedures
+- `server/agents/trendingAudioAgent.ts` — Detection logic
+- `server/integrations/spotify.ts` — Spotify API wrapper
+- `client/src/pages/TrendingAudioHub.tsx` — React UI
+- `drizzle/migrations/0016_audio_tables.sql` — DB schema
 
-### Phase 2 — Shared Infrastructure
-- [x] server/agents/agentBase.ts — abstract AgentBase class (run, applyRules, analyzeWithAI, executeDecision, computeScore)
-- [x] server/agents/rulesEngine.ts — RulesEngine<TMetrics> (register, evaluate, priority-based)
-- [x] server/agents/decisionLog.ts — DecisionLog (save, getPending, approve, reject, getHistory)
-- [x] server/agents/sharedMetrics.ts — SharedVideoMetrics (single DB query shared by all agents)
+---
 
-### Phase 3 — Agents
-- [x] server/agents/videoAgent.ts — stalled jobs, quality scores, pipeline failures (schedule: every 1h)
-- [x] server/agents/channelAgent.ts — posting gaps, CTR alerts, subscriber drops (schedule: every 6h)
-- [x] server/agents/contentCalendarAgent.ts — queue management, auto-generate calendar (schedule: daily 20:00)
-- [x] server/agents/thumbnailABAgent.ts — A/B winner detection, rotate losers (schedule: every 12h)
-- [x] server/agents/blueprintAgent.ts — blueprint execution rate, niche decay (schedule: daily 08:00)
+### Phase 10: Re-Creation Engine
+**Duration:** 8–10 days  
+**Modules:** yt-dlp, GPT-4 Vision, LLM transformation
 
-### Phase 4 — Orchestrator + LeadOS
-- [x] server/agents/orchestrator.ts — AgentOrchestrator (parallel/sequential groups, health score, notifyOwner)
-- [x] server/agents/orchestrator.ts — Heartbeat cron endpoint POST /api/scheduled/mags-orchestrator
-- [x] server/routers/agents.ts — tRPC procedures (listDecisions, approveDecision, rejectDecision, triggerAgent, runFull, getReport, updateThreshold, getOrchestratorRuns)
-- [x] POST /api/agents/webhook — LeadOS inbound (run_agent, approve_decision, reject_decision, get_report, run_full)
-- [x] LeadOS outbound push — mags_cycle_complete event after each cycle
+- [ ] yt-dlp video downloader (no watermark)
+- [ ] GPT-4 Vision hook analysis
+- [ ] Hook transformation (brand voice)
+- [ ] CTA transformation
+- [ ] Audio matching
+- [ ] Caption generation
+- [ ] One-click recreation
+- [ ] Vitest tests (12+ tests)
 
-### Phase 5 — Admin Dashboard
-- [x] Frontend: /admin/agents route registered in App.tsx
-- [x] Frontend: AgentsDashboard.tsx — MAGS Command Center page
-- [x] Frontend: Overall Health Score gauge (0-100) with color indicator
-- [x] Frontend: Per-agent cards (score, last run, decisions count, [Trigger], [Details])
-- [x] Frontend: Pending Approvals queue with [Approve] / [Reject] buttons
-- [x] Frontend: Decision History timeline with reasoning + confidence
-- [x] Frontend: [Run All] button for manual full cycle trigger
-- [x] Frontend: LeadOS webhook URL configuration in Settings panel
-- [x] Frontend: Nav link "🤖 MAGS" in Home.tsx header
+**Files to create:**
+- `server/routers/recreation.ts` — tRPC procedures
+- `server/agents/recreationAgent.ts` — Recreation logic
+- `server/integrations/ytdlp.ts` — yt-dlp wrapper
+- `client/src/pages/ReCreationStudio.tsx` — React UI
+- `drizzle/migrations/0017_recreation_tables.sql` — DB schema
+
+---
+
+### Phase 11: Monetization Dashboard
+**Duration:** 6–8 days  
+**Modules:** Revenue aggregation, PPV menu, forecasting
+
+- [ ] Revenue metrics aggregator (all platforms)
+- [ ] PPV menu builder
+- [ ] Fanvue subscriber tracking
+- [ ] OnlyFans subscriber tracking
+- [ ] YouTube revenue tracking
+- [ ] Top-performing content analysis
+- [ ] Revenue forecasting (ML-based)
+- [ ] Vitest tests (10+ tests)
+
+**Files to create:**
+- `server/routers/monetize.ts` — tRPC procedures
+- `client/src/pages/MonetizationDashboard.tsx` — React UI
+- `drizzle/migrations/0018_monetization_tables.sql` — DB schema
+
+---
+
+### Phase 12: Launch Sequencer
+**Duration:** 10–12 days  
+**Modules:** 14-day/30-day templates, daily executor
+
+- [ ] 14-day launch template
+- [ ] 30-day launch template
+- [ ] Custom launch builder
+- [ ] Daily executor (content generation + posting)
+- [ ] Metrics tracking per day
+- [ ] Adaptive recommendations
+- [ ] Manual override options
+- [ ] Vitest tests (15+ tests)
+
+**Files to create:**
+- `server/routers/launch.ts` — tRPC procedures
+- `server/agents/launchSequencerAgent.ts` — Executor logic
+- `client/src/pages/LaunchSequencer.tsx` — React UI
+- `drizzle/migrations/0019_launch_tables.sql` — DB schema
+
+---
+
+### Phase 13: Lightning AI Batch Mode
+**Duration:** 6–8 days  
+**Modules:** Lightning AI SDK, batch queue, cost optimization
+
+- [ ] Lightning AI SDK integration
+- [ ] Batch queue management
+- [ ] Spot instance cost optimization
+- [ ] Studio lifecycle management
+- [ ] Fallback to fal.ai on failure
+- [ ] Cost comparison UI
+- [ ] Batch scheduling
+- [ ] Vitest tests (10+ tests)
+
+**Files to create:**
+- `server/integrations/lightning.ts` — Lightning AI wrapper
+- `server/routers/batch.ts` — tRPC procedures
+- `client/src/pages/BatchModeConfig.tsx` — React UI
+
+---
+
+### Phase 14: Advanced Analytics
+**Duration:** 8–10 days  
+**Modules:** Real-time dashboard, ML forecasting
+
+- [ ] Real-time dashboard
+- [ ] Cohort analysis
+- [ ] Funnel tracking
+- [ ] Churn prediction
+- [ ] Revenue forecasting
+- [ ] A/B test results
+- [ ] Custom reports
+- [ ] Vitest tests (12+ tests)
+
+**Files to create:**
+- `server/routers/analytics.ts` — tRPC procedures
+- `client/src/pages/AdvancedAnalytics.tsx` — React UI
+
+---
+
+## 🎨 UI/UX Enhancements
+
+### Timeline Editor UI
+- [ ] Drag-and-drop clip arrangement
+- [ ] Real-time preview pane
+- [ ] Effect library (transitions, overlays, color grading)
+- [ ] Watermark preview
+- [ ] Keyboard shortcuts (spacebar play, delete clip, etc.)
+- [ ] Undo/redo stack
+
+### Multi-platform Dashboard
+- [ ] Platform selector (checkboxes)
+- [ ] Schedule calendar (week/month view)
+- [ ] Metrics heatmap (performance by platform)
+- [ ] Bulk actions (schedule multiple posts)
+- [ ] Drag-and-drop scheduling
+
+### Chatbot Config UI
+- [ ] Personality selector (6 modes)
+- [ ] Response template builder
+- [ ] PPV menu editor (drag-reorder items)
+- [ ] Voice note preview
+- [ ] Conversation history viewer
+
+### Monetization Dashboard
+- [ ] Revenue chart (line/bar)
+- [ ] Top content table (sortable)
+- [ ] Subscriber growth chart
+- [ ] PPV conversion funnel
+- [ ] Revenue forecast chart
+
+---
+
+## 🧪 Testing Requirements
+
+### Unit Tests
+- [ ] All tRPC procedures (80+ tests)
+- [ ] All agents (25+ tests)
+- [ ] All integrations (30+ tests)
+- [ ] DB helpers (15+ tests)
+- [ ] Utility functions (20+ tests)
+
+### Integration Tests
+- [ ] Timeline editor → FFmpeg rendering
+- [ ] Multi-platform posting → metrics aggregation
+- [ ] Chatbot → Fanvue webhook → response
+- [ ] Launch sequencer → daily executor
+- [ ] MAGS agents → orchestrator
+
+### E2E Tests
+- [ ] Full project creation → posting → metrics
+- [ ] Channel blueprint → video generation → YouTube upload
+- [ ] Launch sequence → 14-day execution
+- [ ] Monetization → PPV sale → revenue tracking
+
+---
+
+## 📊 Performance Targets
+
+| Operation | Target | Current |
+|---|---|---|
+| Video generation | < 30s | ✓ Kling |
+| PDF export | < 10s | ✓ Puppeteer |
+| Multi-platform posting | < 5s | ⏳ TBD |
+| MAGS cycle | < 2min | ✓ 90s avg |
+| Dashboard load | < 2s | ✓ 1.2s avg |
+| Timeline render | < 60s | ⏳ TBD |
+| Chatbot response | < 3s | ⏳ TBD |
+
+---
+
+## 🔐 Security Checklist
+
+- [ ] All API keys in env variables (never in code)
+- [ ] OAuth tokens encrypted in DB
+- [ ] Webhook signature verification (Fanvue, YouTube)
+- [ ] Rate limiting on all endpoints
+- [ ] CORS properly configured
+- [ ] SQL injection prevention (Drizzle ORM)
+- [ ] XSS prevention (React escaping)
+- [ ] CSRF tokens on forms
+- [ ] Input validation on all endpoints
+- [ ] Error messages don't leak sensitive data
+
+---
+
+## 📚 Documentation to Write
+
+- [ ] Timeline Editor user guide
+- [ ] Multi-platform setup guide (per platform)
+- [ ] Chatbot personality guide
+- [ ] Launch sequencer templates
+- [ ] API reference (all new endpoints)
+- [ ] Database schema documentation
+- [ ] Deployment checklist
+- [ ] Troubleshooting guide
+
+---
+
+## 🚀 Deployment Checklist
+
+Before each checkpoint:
+- [ ] All tests passing (vitest)
+- [ ] TypeScript compilation (0 errors)
+- [ ] No console errors/warnings
+- [ ] Performance benchmarks met
+- [ ] Security audit passed
+- [ ] Database migrations tested
+- [ ] API integrations tested
+- [ ] UI responsive on mobile
+- [ ] Documentation updated
+- [ ] Checkpoint created + versioned
+
+---
+
+## 📅 Timeline Estimate
+
+| Phase | Duration | Start | End |
+|---|---|---|---|
+| Phase 6 (Timeline) | 8–10d | Week 1 | Week 2 |
+| Phase 7 (Multi-platform) | 12–15d | Week 2 | Week 4 |
+| Phase 8 (Chatbot) | 10–12d | Week 4 | Week 6 |
+| Phase 9 (Trending Audio) | 6–8d | Week 6 | Week 7 |
+| Phase 10 (Re-Creation) | 8–10d | Week 7 | Week 8 |
+| Phase 11 (Monetization) | 6–8d | Week 8 | Week 9 |
+| Phase 12 (Launch Seq) | 10–12d | Week 9 | Week 11 |
+| Phase 13 (Lightning AI) | 6–8d | Week 11 | Week 12 |
+| Phase 14 (Analytics) | 8–10d | Week 12 | Week 13 |
+| **Total** | **~90 days** | | **Q3 2026** |
+
+---
+
+## 🎯 Success Metrics
+
+### By Phase Completion
+- Phase 6: 1 video project → 1 rendered timeline output
+- Phase 7: 1 video → posted on 5 platforms simultaneously
+- Phase 8: 10 chatbot conversations → 3+ PPV sales
+- Phase 9: 100 trending audios detected → 20+ applied to projects
+- Phase 10: 5 viral videos → 5 recreated videos
+- Phase 11: $1000+ monthly revenue tracked across platforms
+- Phase 12: 14-day launch sequence → 100+ followers
+- Phase 13: 50% cost reduction on batch video generation
+- Phase 14: Revenue forecast accuracy > 85%
+
+---
+
+## 💡 Future Enhancements (Post-v2.0)
+
+- [ ] Live streaming integration (YouTube Live, TikTok Live)
+- [ ] Community management (auto-reply, moderation)
+- [ ] Influencer marketplace (hire creators)
+- [ ] White-label solution (resell to agencies)
+- [ ] Mobile app (iOS/Android)
+- [ ] API for third-party integrations
+- [ ] Advanced ML (churn prediction, content recommendation)
+- [ ] Blockchain (NFT drops, token rewards)
+
+---
+
+## 🔗 Related Projects
+
+- **story_liner** — Professional video editing (timeline, effects)
+- **TS Mommy Ecosystem** — AI influencer automation (multi-platform, monetization)
+- **MAGS** — Multi-agent growth system (optimization, decisions)
+
+---
+
+**Last Updated:** June 2026  
+**Maintained By:** PejtrView  
+**Status:** Active Development
