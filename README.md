@@ -19,7 +19,8 @@ Fotka → AI Generování → Timeline Editing → Multi-platform Posting → Mo
 | Oblast | Implementace |
 |---|---|
 | **Video generování** | Kling AI + fal.ai Wan 2.5 + Lightning AI LTX-Video (batch mode) |
-| **Timeline Editor** | FFmpeg drag-and-drop editing + effects + watermark |
+| **Timeline Editor** | FFmpeg drag-and-drop editing + effects + watermark + Bernini object replacement |
+| **Bernini Effects** | Autonomní object replacement (MAGS agent) + interactive timeline editor |
 | **Multi-platform posting** | YouTube + TikTok + Instagram + X + Fanvue (1 kliknutí) |
 | **AI Chatbot** | 24/7 Fanvue/DM automation + PPV prodej + voice notes |
 | **Trending Audio** | Automatická detekce + aplikace trending zvuků |
@@ -66,6 +67,7 @@ video-factory/
 │   │   ├── youtube.ts                      # YouTube API + Blueprint
 │   │   ├── agents.ts                       # MAGS agents + LeadOS
 │   │   ├── timeline.ts                     # Timeline editor
+│   │   ├── bernini.ts                      # Bernini effects (NEW)
 │   │   ├── posting.ts                      # Multi-platform posting
 │   │   ├── chatbot.ts                      # AI chatbot
 │   │   ├── audio.ts                        # Trending audio
@@ -84,6 +86,7 @@ video-factory/
 │   │   ├── contentCalendarAgent.ts         # Content queue management
 │   │   ├── thumbnailABAgent.ts             # A/B thumbnail testing
 │   │   ├── blueprintAgent.ts               # Blueprint execution tracking
+│   │   ├── contentModificationAgent.ts     # Bernini object replacement (NEW)
 │   │   └── orchestrator.ts                 # Agent orchestrator
 │   │
 │   ├── db.ts                               # Database helpers
@@ -91,6 +94,8 @@ video-factory/
 │   ├── pdfGenerator.ts                     # PDF export (Puppeteer)
 │   ├── ffmpegRenderer.ts                   # FFmpeg video rendering
 │   ├── storage.ts                          # S3 file storage
+│   ├── integrations/
+│   │   ├── bernini.ts                      # Bernini API wrapper (NEW)
 │   └── _core/
 │       ├── index.ts                        # Express app + scheduled endpoints
 │       ├── context.ts                      # tRPC context

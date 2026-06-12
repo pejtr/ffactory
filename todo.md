@@ -80,7 +80,37 @@
 
 ---
 
-### Phase 7: Multi-platform Posting
+### Phase 7: Bernini Video Object Modification (NEW)
+**Duration:** 8–10 days  
+**Modules:** Bernini API, MAGS ContentModificationAgent, Timeline effects
+
+- [ ] Bernini API integration (FAL.ai or ByteDance)
+- [ ] ContentModificationAgent — MAGS agent for autonomous object replacement
+  - [ ] Detects low-CTR videos (< 3%)
+  - [ ] Analyzes video content with AI (object detection)
+  - [ ] Suggests viral object replacements (e.g., basketball → fire ball)
+  - [ ] Generates Bernini prompt + executes replacement
+  - [ ] A/B tests original vs modified version
+  - [ ] Auto-uploads winner to YouTube
+- [ ] Timeline Editor — Bernini effects panel
+  - [ ] Object selector (click on video to select object)
+  - [ ] Replacement prompt input
+  - [ ] Live preview (first 5 seconds)
+  - [ ] Apply to full video button
+  - [ ] Queue for rendering
+- [ ] Frontend: Bernini effects UI in TimelineEditor.tsx
+- [ ] Tests for ContentModificationAgent (10+ tests)
+
+**Files to create:**
+- `server/integrations/bernini.ts` — Bernini API wrapper
+- `server/agents/contentModificationAgent.ts` — MAGS agent
+- `server/routers/bernini.ts` — tRPC procedures
+- `client/src/components/BerniniEffectsPanel.tsx` — React UI
+- `drizzle/migrations/0014_bernini_tables.sql` — DB schema
+
+---
+
+### Phase 8: Multi-platform Posting
 **Duration:** 12–15 days  
 **Modules:** TikTok, Instagram, X, Fanvue, OnlyFans APIs
 
@@ -105,7 +135,7 @@
 
 ---
 
-### Phase 8: AI Chatbot (24/7 Monetization)
+### Phase 9: AI Chatbot (24/7 Monetization)
 **Duration:** 10–12 days  
 **Modules:** Fanvue webhook, LLM responses, PPV automation
 
@@ -128,7 +158,7 @@
 
 ---
 
-### Phase 9: Trending Audio Detector
+### Phase 10: Trending Audio Detector
 **Duration:** 6–8 days  
 **Modules:** TikTok, Spotify, Instagram APIs
 
@@ -150,7 +180,7 @@
 
 ---
 
-### Phase 10: Re-Creation Engine
+### Phase 11: Re-Creation Engine
 **Duration:** 8–10 days  
 **Modules:** yt-dlp, GPT-4 Vision, LLM transformation
 
@@ -172,7 +202,7 @@
 
 ---
 
-### Phase 11: Monetization Dashboard
+### Phase 12: Monetization Dashboard
 **Duration:** 6–8 days  
 **Modules:** Revenue aggregation, PPV menu, forecasting
 
@@ -192,7 +222,7 @@
 
 ---
 
-### Phase 12: Launch Sequencer
+### Phase 13: Launch Sequencer
 **Duration:** 10–12 days  
 **Modules:** 14-day/30-day templates, daily executor
 
@@ -213,7 +243,7 @@
 
 ---
 
-### Phase 13: Lightning AI Batch Mode
+### Phase 14: Lightning AI Batch Mode
 **Duration:** 6–8 days  
 **Modules:** Lightning AI SDK, batch queue, cost optimization
 
@@ -233,7 +263,7 @@
 
 ---
 
-### Phase 14: Advanced Analytics
+### Phase 15: Advanced Analytics
 **Duration:** 8–10 days  
 **Modules:** Real-time dashboard, ML forecasting
 
