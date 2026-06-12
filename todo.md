@@ -58,25 +58,30 @@
 
 ## 🔄 NEXT PHASES (Priority Order)
 
-### Phase 6: Timeline Editor (Story Liner integration)
+### Phase 6: Timeline Editor (Story Liner integration) — FIXED
 **Duration:** 8–10 days  
 **Modules:** FFmpeg wrapper, React UI, effects, rendering
 
-- [ ] FFmpeg wrapper for server-side rendering
-- [ ] React drag-and-drop timeline UI
-- [ ] Clip trimming, transitions, effects
-- [ ] Watermark + branding overlay
-- [ ] Text overlay + color grading
-- [ ] Real-time preview
-- [ ] Batch rendering queue
+- [x] FFmpeg wrapper for server-side rendering
+- [x] Proper clip concatenation (FFmpeg concat demuxer)
+- [x] BGM mixing with audio overlay
+- [x] Download endpoint for PC download
+- [x] Clip trimming, transitions, effects
+- [x] Watermark + branding overlay
+- [x] Text overlay + color grading
+- [x] Batch rendering queue
+- [x] DB migration for BGM fields
+- [ ] React drag-and-drop timeline UI (frontend)
+- [ ] Real-time preview (frontend)
 - [ ] Performance optimization
 - [ ] Vitest tests (15+ tests)
 
-**Files to create:**
-- `server/ffmpegRenderer.ts` — FFmpeg wrapper
-- `server/routers/timeline.ts` — tRPC procedures
-- `client/src/pages/TimelineEditor.tsx` — React UI
-- `drizzle/migrations/0013_timeline_tables.sql` — DB schema
+**Files created:**
+- [x] `server/ffmpegRenderer.ts` — FFmpeg wrapper (FIXED: concat demuxer, BGM mixing)
+- [x] `server/routers/timeline.ts` — tRPC procedures (FIXED: download endpoint)
+- [ ] `client/src/pages/TimelineEditor.tsx` — React UI (TODO: frontend)
+- [x] `drizzle/migrations/0013_timeline_tables.sql` — DB schema
+- [x] `drizzle/migrations/0014_melted_trauma.sql` — BGM fields migration
 
 ---
 

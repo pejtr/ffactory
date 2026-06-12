@@ -572,3 +572,97 @@ export const leadosConfig = mysqlTable("leados_config", {
 });
 export type LeadosConfig = typeof leadosConfig.$inferSelect;
 export type InsertLeadosConfig = typeof leadosConfig.$inferInsert;
+
+
+// ─── Timeline Editor ───────────────────────────────────────────────────────────
+// Timeline project (container for clips)
+export const timelineProjects = mysqlTable("timeline_projects", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  aspectRatio: mysqlEnum("aspect_ratio", ["16:9", "9:16", "1:1", "4:3"]).default("16:9").notNull(),
+  fps: int("fps").default(30).notNull(),
+  resolution: mysqlEnum("resolution", ["720p", "1080p", "2K", "4K"]).default("1080p").notNull(),
+  status: mysqlEnum("status", ["draft", "rendering", "completed", "failed"]).default("draft").notNull(),
+  clipsCount: int("clips_count").default(0).notNull(),
+  totalDuration: int("total_duration").default(0).notNull(), // seconds
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type TimelineProject = typeof timelineProjects.$inferSelect;
+export type InsertTimelineProject = typeof timelineProjects.$inferInsert;
+
+// Individual clip in timeline
+export const timelineClips = mysqlTable("timeline_clips", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("project_id").notNull(),
+  position: int("position").notNull(), // order in timeline
+  type: mysqlEnum("type", ["video", "image", "text", "audio", "transition"]).notNull(),
+  sourceUrl: varchar("source_url", { length: 512 }),
+  startTime: float("start_time").default(0).notNull(), // seconds
+  duration: float("duration").notNull(), // seconds
+  trimStart: float("trim_start").default(0).notNull(), // seconds
+  trimEnd: float("trim_end").notNull(), // seconds
+  // Effects
+  effects: json("effects"), // { brightness, contrast, saturation, blur, etc }
+  // Transitions
+  transitionType: varchar("transition_type", { length: 64 }), // fade, slide, wipe, etc
+  transitionDuration: float("transition_duration").default(0.5).notNull(), // seconds
+  // Text overlay
+  text: text("text"),
+  textStyle: json("text_style"), // { font, size, color, position, etc }
+  // Audio
+  audioVolume: float("audio_volume").default(1).notNull(), // 0-1
+  audioFadeIn: float("audio_fade_in").default(0).notNull(), // seconds
+  audioFadeOut: float("audio_fade_out").default(0).notNull(), // seconds
+  // Watermark
+  watermarkUrl: varchar("watermark_url", { length: 512 }),
+  watermarkOpacity: float("watermark_opacity").default(0.5).notNull(), // 0-1
+  watermarkPosition: varchar("watermark_position", { length: 32 }), // top-left, top-right, bottom-left, bottom-right
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type TimelineClip = typeof timelineClips.$inferSelect;
+export type InsertTimelineClip = typeof timelineClips.$inferInsert;
+
+// Rendered video output
+export const renderedVideos = mysqlTable("rendered_videos", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("project_id").notNull(),
+  userId: int("user_id").notNull(),
+  outputUrl: varchar("output_url", { length: 512 }),
+  fileSize: int("file_size"), // bytes
+  duration: int("duration"), // seconds
+  resolution: varchar("resolution", { length: 32 }), // 1920x1080, etc
+  fps: int("fps").default(30).notNull(),
+  codec: varchar("codec", { length: 32 }), // h264, h265, vp9, etc
+  bitrate: int("bitrate"), // kbps
+  status: mysqlEnum("status", ["queued", "rendering", "completed", "failed"]).default("queued").notNull(),
+  progress: int("progress").default(0).notNull(), // 0-100
+  errorMessage: text("error_message"),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type RenderedVideo = typeof renderedVideos.$inferSelect;
+export type InsertRenderedVideo = typeof renderedVideos.$inferInsert;
+
+// Rendering queue (batch processing)
+export const renderingQueue = mysqlTable("rendering_queue", {
+  id: int("id").autoincrement().primaryKey(),
+  videoId: int("video_id").notNull(),
+  priority: int("priority").default(5).notNull(),
+  mode: mysqlEnum("mode", ["realtime", "batch"]).default("realtime").notNull(),
+  estimatedDuration: int("estimated_duration"),
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed"]).default("pending").notNull(),
+  workerId: varchar("worker_id", { length: 128 }),
+  bgmUrl: varchar("bgm_url", { length: 512 }),
+  bgmVolume: float("bgm_volume").default(0.3),
+  queuedAt: timestamp("queued_at").defaultNow().notNull(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+});
+export type RenderingQueueItem = typeof renderingQueue.$inferSelect;
+export type InsertRenderingQueueItem = typeof renderingQueue.$inferInsert;
