@@ -458,3 +458,108 @@ Before each checkpoint:
 **Last Updated:** June 2026  
 **Maintained By:** PejtrView  
 **Status:** Active Development
+
+
+## Higgsfield Connector Integration (NEW)
+**Duration:** 6–8 days  
+**Modules:** Higgsfield API, SoulID, CinematicID, video import
+
+### Phase 16: Higgsfield Integration
+- [ ] DB: higgsfield_videos table (videoId, title, description, thumbnail, duration, metadata JSON)
+- [ ] DB: higgsfield_settings table (userId, apiKey, lastSync, syncStatus)
+- [ ] DB: soulid_profiles table (videoId, soulIdConfig JSON, enabled, appliedAt)
+- [ ] DB: cinematic_settings table (videoId, cinematicConfig JSON, enabled, appliedAt)
+- [ ] DB: run migration for Higgsfield tables
+- [ ] Backend: Higgsfield API client (auth, listVideos, getVideoDetails, applyEffects)
+- [ ] Backend: SoulID wrapper (consistency detection, profile creation, application)
+- [ ] Backend: CinematicID wrapper (cinematic enhancement, color grading, effects)
+- [ ] Backend: Video history loader (fetch all videos from Higgsfield account)
+- [ ] Backend: tRPC procedures (listHiggsieldVideos, importVideo, applySoulID, applyCinematicID, syncHistory)
+- [ ] Frontend: HiggsieldIntegration.tsx page (video gallery, import buttons, feature toggles)
+- [ ] Frontend: SoulID config panel (character consistency settings)
+- [ ] Frontend: CinematicID config panel (cinematic enhancement settings)
+- [ ] Frontend: Video import workflow (select → apply features → render)
+- [ ] Tests: Higgsfield API client (8+ tests)
+- [ ] Tests: SoulID/CinematicID wrappers (10+ tests)
+- [ ] Tests: tRPC procedures (8+ tests)
+
+**Files to create:**
+- `server/integrations/higgsfield.ts` — Higgsfield API client
+- `server/integrations/soulid.ts` — SoulID wrapper
+- `server/integrations/cinematicid.ts` — CinematicID wrapper
+- `server/routers/higgsfield.ts` — tRPC procedures
+- `client/src/pages/HiggsieldIntegration.tsx` — React UI
+- `client/src/components/SoulIDPanel.tsx` — SoulID config
+- `client/src/components/CinematicIDPanel.tsx` — CinematicID config
+- `drizzle/migrations/0015_higgsfield_tables.sql` — DB schema
+- `server/higgsfield.test.ts` — Tests
+
+
+---
+
+## 🔬 MATRIX LAB — Automated AI Character Framework
+**Status:** Specification Complete  
+**Location:** `docs/MATRIX_LAB.md`  
+**Priority:** High (Future Platform Feature)  
+**Estimated Timeline:** 12 weeks  
+**Team Size:** 4–5 engineers  
+
+### Key Features
+- LoRA training pipeline (Z-Image-Turbo base model)
+- Automated checkpoint evaluation & selection
+- ComfyUI generation workflows (free + premium tiers)
+- Character specializations (selfie, fashion, NSFW modes)
+- Multi-character batch training
+- RunPod GPU infrastructure management
+- REST API for third-party integration
+
+### Phase 1: Core Infrastructure (Weeks 1–2)
+- [ ] RunPod integration + template management
+- [ ] LoRA training orchestrator
+- [ ] Checkpoint evaluation system
+- [ ] S3 storage setup
+- [ ] Database schema (characters, LoRAs, training jobs, generation jobs)
+
+### Phase 2: Training Pipeline (Weeks 3–4)
+- [ ] Dataset upload & validation
+- [ ] Automatic image preprocessing
+- [ ] LoRA training executor
+- [ ] Checkpoint comparison & selection
+- [ ] Quality scoring system
+
+### Phase 3: Generation Pipeline (Weeks 5–6)
+- [ ] ComfyUI workflow templates
+- [ ] Prompt processing & trigger word injection
+- [ ] Generation job queue
+- [ ] Post-processing pipeline
+- [ ] Output gallery & distribution
+
+### Phase 4: Web UI (Weeks 7–8)
+- [ ] Character studio (upload, manage, view)
+- [ ] Training dashboard (job status, metrics, checkpoint selection)
+- [ ] Generation interface (prompt, style, batch options)
+- [ ] Gallery & analytics
+- [ ] Settings & specialization config
+
+### Phase 5: Advanced Features (Weeks 9–10)
+- [ ] Batch character training (10+ characters simultaneously)
+- [ ] Multi-character generation (group photos)
+- [ ] API for third-party integration
+- [ ] Webhook notifications
+- [ ] Advanced analytics & reporting
+
+### Phase 6: Optimization & Scale (Weeks 11–12)
+- [ ] Performance optimization (caching, parallel processing)
+- [ ] Cost optimization (spot instances, batch scheduling)
+- [ ] Monitoring & alerting
+- [ ] Documentation & training
+- [ ] Production deployment
+
+---
+
+## 📝 Documentation Files
+
+- `README.md` — Main project documentation
+- `docs/ARCHITECTURE.md` — System architecture & design patterns
+- `docs/MATRIX_LAB.md` — MATRIX LAB framework specification
+- `CLAUDE_CODE_COORDINATION.md` — Claude Code development guidelines
