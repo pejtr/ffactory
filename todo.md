@@ -694,7 +694,7 @@ Implementuj jako **Phase 17** (po NotebookLM). Synergy:
 
 ### Overview
 **Higgsfield Integration** — Přinese plnou sílu Higgsfield do Video Factory:
-- ✅ Image generation (Soul 2.0, Nano Banana, Marketing Studio)
+- ✅ Image generation (Soul 2.0, Nano Banana, Seedream, Marketing Studio)
 - ✅ Video generation (Seedance 2.0, Kling 3.0, Personal Clipper)
 - ✅ 3D generation (image-to-3D, rigging, animation)
 - ✅ Audio/TTS (Seed Audio, ElevenLabs, voice cloning)
@@ -723,7 +723,7 @@ Implementuj jako **Phase 17** (po NotebookLM). Synergy:
 
 - [ ] tRPC router: `server/routers/higgsfield.ts`
 - [ ] Procedury:
-  - [ ] `generateImage` — Soul 2.0, Nano Banana, Marketing Studio
+  - [ ] `generateImage` — Soul 2.0, Nano Banana, Seedream, Marketing Studio
   - [ ] `generateVideo` — Seedance 2.0, Kling 3.0, Personal Clipper
   - [ ] `getGenerationStatus` — polling
   - [ ] `listGenerations` — historií s filtry
@@ -865,6 +865,8 @@ higgsfield: {
   
   // Image Generation
   generateImage: (prompt, model, params) => Promise<{ jobId }>
+  // Image models: soul_2, nano_banana_pro, seedream_4_5, marketing_studio_image
+  // Seedream: SOTA photorealistic images, best for product/fashion/editorial
   
   // Video Generation
   generateVideo: (prompt, model, params) => Promise<{ jobId }>
@@ -926,3 +928,322 @@ Implementuj **sekvenciálně** (Iterace 1→2→3→4→5):
 5. Pak testing + deployment
 
 **Alternativa:** Paralelní Iterace 2+3 (pokud máš kapacitu)
+
+
+---
+
+## Seedream Image Generation — Model Comparison
+
+### Seedream 4.5 (NEW)
+**Best for:** Photorealistic, product photography, fashion, editorial, high-quality stills
+
+| Aspekt | Seedream 4.5 | Nano Banana Pro | Soul 2.0 |
+|---|---|---|---|
+| **Kvalita** | ⭐⭐⭐⭐⭐ Fotorealistická | ⭐⭐⭐⭐ Velmi dobrá | ⭐⭐⭐⭐⭐ Identita |
+| **Fotorealizmus** | Excelentní | Dobrý | Střední |
+| **Detaily** | Vysoké | Vysoké | Střední |
+| **Konzistence** | Nižší (bez identity) | Střední | Excelentní (identity) |
+| **Cena** | $0.03/image | $0.02/image | $0.02/image |
+| **Use Case** | Produkty, móda, editoriales | Všeobecné | Postavy, avatary |
+| **Čas** | 15-20s | 10-15s | 10-15s |
+
+### Implementace v Phase 18
+
+**Seedream v `generateImage` proceduře:**
+```typescript
+generateImage: protectedProcedure
+  .input(z.object({
+    prompt: z.string(),
+    model: z.enum(['soul_2', 'nano_banana_pro', 'seedream_4_5', 'marketing_studio_image']),
+    params: z.object({
+      aspectRatio: z.string().optional(), // 1:1, 16:9, 9:16, etc
+      style: z.string().optional(), // photorealistic, artistic, cinematic
+      quality: z.enum(['low', 'medium', 'high']).optional(),
+      seed: z.number().optional(),
+    }).optional(),
+  }))
+  .mutation(async ({ ctx, input }) => {
+    // Route to correct model handler
+    if (input.model === 'seedream_4_5') {
+      return generateImageSeedream(ctx.user.id, input);
+    }
+    // ... other models
+  })
+```
+
+**Seedream-specific wrapper:**
+```typescript
+async function generateImageSeedream(userId: number, input: {
+  prompt: string;
+  params?: { aspectRatio?: string; style?: string; quality?: string; seed?: number };
+}) {
+  // Call Higgsfield MCP: generate_image with model='seedream_4_5'
+  // Track in higgsfield_generations table
+  // Return jobId for polling
+}
+```
+
+### Use Cases v Video Factory
+
+1. **Product Videos** — Seedream pro product shots → Kling 3.0 pro animaci
+2. **Fashion Content** — Seedream pro lookbook → Timeline Editor pro efekty
+3. **Thumbnail Generation** — Seedream pro high-quality thumbnails
+4. **Marketing Materials** — Seedream pro ads → Marketing Studio pro finalizaci
+5. **Editorial Content** — Seedream pro fotografie → Seedance 2.0 pro videa
+
+### ROI: Seedream Integration
+
+| Metrika | Hodnota |
+|---|---|
+| **Nové image modely** | +1 (Seedream) |
+| **Use cases** | +5 (product, fashion, editorial, ads, thumbnails) |
+| **Cena** | $0.03/image (vs $0.05 pro tradiční fotograf) |
+| **Kvalita lift** | +30% (fotorealizmus) |
+| **Implementační čas** | +4 hodiny (Iterace 2) |
+
+### Doporučení
+
+Seedream by měl být **default model pro product/fashion content** v Phase 18 Iterace 2.
+
+
+---
+
+## Phase 18.5: Adult Content Management (NEW - PRIORITY A)
+**Duration:** 3–4 days (integrated into Phase 18 Iterace 2–3)  
+**Modules:** Age verification, content filtering, Fanvue/OnlyFans integration
+
+### Overview
+**Adult Content Workspace** — Bezpečné generování a distribuce adult obsahu:
+- ✅ Age verification (18+ gate)
+- ✅ Separate workspace (private, tagged)
+- ✅ Nude/intimate scene generation (Soul 2.0, Seedream)
+- ✅ Content filtering (hide from public)
+- ✅ Fanvue/OnlyFans auto-posting
+- ✅ Subscriber-only access
+- ✅ Revenue tracking (premium pricing)
+- ✅ Compliance & legal (terms of service)
+
+### Implementation Tasks
+
+#### Database Schema
+
+```sql
+-- Adult content workspace
+CREATE TABLE adult_content_workspace (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL UNIQUE,
+  isVerified18Plus BOOLEAN DEFAULT FALSE,
+  verificationDate TIMESTAMP,
+  termsAccepted BOOLEAN DEFAULT FALSE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY user_id (userId)
+);
+
+-- Adult content projects
+CREATE TABLE adult_content_projects (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  contentType ENUM('nude', 'intimate', 'sensual', 'artistic') NOT NULL,
+  status ENUM('draft', 'generating', 'completed', 'published', 'archived') DEFAULT 'draft',
+  
+  -- Media
+  thumbnailUrl TEXT,
+  videoUrl TEXT,
+  previewUrl TEXT,
+  
+  -- Distribution
+  fanvuePostId VARCHAR(255),
+  onlyFansPostId VARCHAR(255),
+  publishedAt TIMESTAMP,
+  
+  -- Monetization
+  subscriptionTier ENUM('free', 'basic', 'premium', 'vip') DEFAULT 'premium',
+  priceUsd FLOAT,
+  revenue FLOAT DEFAULT 0,
+  
+  -- Metadata
+  metadata JSON,
+  
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  KEY userId (userId),
+  KEY status (status),
+  KEY contentType (contentType)
+);
+
+-- Adult content generation history
+CREATE TABLE adult_content_generations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  projectId INT NOT NULL,
+  userId INT NOT NULL,
+  prompt TEXT NOT NULL,
+  model VARCHAR(128) NOT NULL,
+  imageUrl TEXT,
+  videoUrl TEXT,
+  status ENUM('pending', 'generating', 'completed', 'failed') DEFAULT 'pending',
+  costUsd FLOAT,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Subscriber access logs
+CREATE TABLE adult_content_access_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  projectId INT NOT NULL,
+  subscriberId INT NOT NULL,
+  accessedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  platform ENUM('fanvue', 'onlyfans', 'direct') DEFAULT 'direct'
+);
+```
+
+#### tRPC Procedures
+
+**Age Verification:**
+- [ ] `verifyAge18Plus(termsAccepted: boolean)` — 18+ verification gate
+- [ ] `getAdultWorkspaceStatus()` — check if user has adult workspace
+- [ ] `createAdultWorkspace()` — initialize adult workspace
+
+**Content Management:**
+- [ ] `createAdultProject(title, description, contentType)` — new adult project
+- [ ] `listAdultProjects(status?, limit?, offset?)` — list user's adult projects
+- [ ] `getAdultProject(projectId)` — get project details
+- [ ] `updateAdultProject(projectId, updates)` — edit project
+- [ ] `deleteAdultProject(projectId)` — delete project
+- [ ] `archiveAdultProject(projectId)` — archive (don't delete)
+
+**Generation:**
+- [ ] `generateAdultImage(projectId, prompt, model)` — nude/intimate image
+  - Models: soul_2 (identity), seedream_4_5 (photorealistic)
+  - Prompts: nude, intimate, sensual, artistic
+- [ ] `generateAdultVideo(projectId, prompt, model)` — adult video
+  - Models: kling_3_0 (motion), seedance_2_0 (full video)
+- [ ] `getGenerationStatus(generationId)` — polling
+
+**Distribution:**
+- [ ] `publishToFanvue(projectId)` — auto-post to Fanvue
+- [ ] `publishToOnlyFans(projectId)` — auto-post to OnlyFans
+- [ ] `setSubscriptionTier(projectId, tier, priceUsd)` — pricing
+- [ ] `trackSubscriberAccess(projectId, subscriberId)` — access logging
+
+**Analytics:**
+- [ ] `getAdultContentStats()` — revenue, views, subscribers
+- [ ] `getProjectPerformance(projectId)` — per-project metrics
+- [ ] `getRevenueByPlatform()` — Fanvue vs OnlyFans breakdown
+
+#### Frontend Pages
+
+- [ ] `/adult/verify` — Age verification (18+ gate)
+- [ ] `/adult/workspace` — Adult content dashboard
+- [ ] `/adult/create` — Create new adult project
+- [ ] `/adult/projects` — List adult projects (private)
+- [ ] `/adult/generate` — Generate nude/intimate content
+- [ ] `/adult/distribution` — Fanvue/OnlyFans settings
+- [ ] `/adult/analytics` — Revenue & subscriber tracking
+
+#### Components
+
+- [ ] `AgeVerificationGate.tsx` — 18+ verification modal
+- [ ] `AdultProjectCard.tsx` — project card (private, tagged)
+- [ ] `AdultGenerationPanel.tsx` — image/video generation UI
+- [ ] `FanvueIntegration.tsx` — Fanvue posting settings
+- [ ] `OnlyFansIntegration.tsx` — OnlyFans posting settings
+- [ ] `SubscriberAccessLog.tsx` — access tracking UI
+- [ ] `AdultAnalyticsDashboard.tsx` — revenue & metrics
+
+#### Integration Points
+
+**Fanvue API:**
+- [ ] OAuth integration (connect Fanvue account)
+- [ ] Post creation (auto-post adult videos)
+- [ ] Subscriber tracking
+- [ ] Revenue sync
+
+**OnlyFans API:**
+- [ ] OAuth integration (connect OnlyFans account)
+- [ ] Post creation (auto-post adult videos)
+- [ ] Subscriber tracking
+- [ ] Revenue sync
+
+**Content Filtering:**
+- [ ] Mark projects as "Adult" in DB
+- [ ] Hide from public feeds
+- [ ] Show only to 18+ verified users
+- [ ] Show only to subscribers (if gated)
+
+#### Compliance & Legal
+
+- [ ] Terms of Service (adult content clause)
+- [ ] Age verification (18+ confirmation)
+- [ ] GDPR compliance (EU users)
+- [ ] CCPA compliance (CA users)
+- [ ] Platform policies (Fanvue, OnlyFans)
+- [ ] Content moderation (no illegal content)
+- [ ] Tax reporting (1099 for US creators)
+
+#### Tests
+
+- [ ] Age verification tests (5+ tests)
+- [ ] Adult project CRUD tests (8+ tests)
+- [ ] Generation tests (10+ tests)
+- [ ] Fanvue/OnlyFans integration tests (8+ tests)
+- [ ] Access control tests (5+ tests)
+- [ ] Compliance tests (5+ tests)
+
+### Use Cases
+
+✅ **OnlyFans Creator** — Generate exclusive nude content for subscribers  
+✅ **Fanvue Performer** — Auto-post intimate videos to Fanvue  
+✅ **Adult Content Studio** — Bulk generation + distribution  
+✅ **Virtual Influencer** — AI-generated adult content (ethical, consensual)  
+✅ **Premium Revenue** — $5–50/video (vs $0.01–0.10 for public)  
+
+### Revenue Model
+
+| Platform | Price/Video | Margin | Monthly (10 videos) |
+|---|---|---|---|
+| **Fanvue** | $10–50 | 70% | $700 |
+| **OnlyFans** | $5–30 | 80% | $400 |
+| **Direct** | $20–100 | 100% | $1000 |
+| **TOTAL** | | | **$2100** |
+
+**vs. Public Content:** $0.01–0.10/video = **21,000× higher revenue**
+
+### ROI: Adult Content Module
+
+| Metrika | Hodnota |
+|---|---|
+| **Nové procedury** | 20+ |
+| **Nové stránky** | 7 pages |
+| **Nové komponenty** | 7 components |
+| **Implementační čas** | 3–4 dny |
+| **Revenue lift** | 21,000× (premium pricing) |
+| **Komplexita** | Střední (compliance-heavy) |
+
+### Doporučení
+
+**Adult Content Management by měl být:**
+1. **Integrated do Phase 18 Iterace 2–3** (core generation)
+2. **Separate workspace** (ne smíšeno s veřejným obsahem)
+3. **18+ gated** (compliance + legal protection)
+4. **Fanvue/OnlyFans first** (highest revenue platforms)
+5. **Premium pricing** (10–100× vyšší než public content)
+
+### Compliance Checklist
+
+- [ ] Age verification implemented (18+ gate)
+- [ ] Terms of Service updated (adult content clause)
+- [ ] Privacy Policy updated (GDPR, CCPA)
+- [ ] Content moderation (no illegal content)
+- [ ] Payment compliance (Fanvue, OnlyFans ToS)
+- [ ] Tax reporting (1099, W-9)
+- [ ] Legal review (consult lawyer for jurisdiction)
+
+### Next Steps
+
+1. **Iterace 2.5:** Add Adult Content Management to Phase 18
+2. **Iterace 3.5:** Fanvue/OnlyFans integration
+3. **Iterace 4.5:** Adult content UI pages
+4. **Iterace 5.5:** Testing + compliance review
+5. **Launch:** Adult workspace (18+ only)
