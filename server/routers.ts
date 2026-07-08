@@ -33,6 +33,7 @@ import { referenceRecreationRouter } from "./routers/referenceRecreation";
 import { youtubeRouter } from "./routers/youtube";
 import { agentsRouter } from "./routers/agents";
 import { motionTransferRouter } from "./routers/motionTransfer";
+import { jobRecoveryRouter } from "./routers/jobRecovery";
 
 export const appRouter = router({
   system: systemRouter,
@@ -44,6 +45,7 @@ export const appRouter = router({
   youtube: youtubeRouter,
   agents: agentsRouter,
   motionTransfer: motionTransferRouter,
+  jobRecovery: jobRecoveryRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

@@ -197,18 +197,19 @@ export default function ProjectView() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-md bg-background/80">
+      <header className="fixed top-0 left-0 right-0 z-[9999] border-b border-border/50 backdrop-blur-md bg-background">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
-            <Link href="/studio">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                <ChevronLeft className="w-4 h-4 mr-1" />Studio
+            <Link href="/studio" className="inline-block">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Studio
               </Button>
             </Link>
             <Separator orientation="vertical" className="h-6" />
-            <div className="flex items-center gap-2">
-              <Film className="w-4 h-4 text-primary" />
-              <span className="font-display text-sm text-foreground truncate max-w-[200px]">{p.title}</span>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Film className="w-4 h-4 text-primary shrink-0" />
+              <span className="font-display text-sm text-foreground truncate">{p.title}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
