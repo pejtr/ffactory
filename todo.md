@@ -1247,3 +1247,91 @@ CREATE TABLE adult_content_access_logs (
 3. **Iterace 4.5:** Adult content UI pages
 4. **Iterace 5.5:** Testing + compliance review
 5. **Launch:** Adult workspace (18+ only)
+
+
+---
+
+## Phase 17.5: Job Recovery & Timeout Handling (URGENT)
+**Duration:** 2–3 days  
+**Modules:** Stalled job detection, timeout handling, error recovery
+
+### Problem
+Video generation jobs get stuck in "processing" state without error or completion.
+
+### Root Causes
+1. **API timeout** — Kling/fal.ai takes > 30 min, no response
+2. **Worker crash** — Background job dies without cleanup
+3. **Database lock** — Status update fails, job frozen
+4. **Network error** — Connection lost mid-generation
+5. **No polling** — Frontend doesn't check status regularly
+
+### Implementation
+
+#### Database Schema Update
+```sql
+ALTER TABLE video_projects ADD COLUMN (
+  processingStartedAt TIMESTAMP,
+  lastStatusCheckAt TIMESTAMP,
+  retryCount INT DEFAULT 0,
+  maxRetries INT DEFAULT 3,
+  errorLog JSON
+);
+
+CREATE TABLE job_recovery_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  projectId INT NOT NULL,
+  jobId VARCHAR(255),
+  status ENUM('timeout', 'stalled', 'error', 'recovered', 'failed') NOT NULL,
+  reason TEXT,
+  action ENUM('retry', 'cancel', 'manual_review') DEFAULT 'retry',
+  recoveredAt TIMESTAMP,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### tRPC Procedures
+- [ ] `checkJobTimeout(projectId)` — detect stalled jobs (> 30 min)
+- [ ] `retryFailedJob(projectId)` — retry with exponential backoff
+- [ ] `cancelJob(projectId)` — cancel stuck job
+- [ ] `getJobErrorLog(projectId)` — view error history
+- [ ] `manualJobReview(projectId)` — admin override
+
+#### Backend Services
+- [ ] **JobMonitor** — Heartbeat cron (every 5 min)
+  - Check all "processing" jobs
+  - Detect timeouts (> 30 min)
+  - Auto-retry with backoff (1 min, 5 min, 15 min)
+  - Log recovery attempts
+  - Notify user if failed
+- [ ] **TimeoutHandler** — Cancel + cleanup
+  - Release resources
+  - Mark as failed
+  - Suggest retry
+- [ ] **ErrorRecovery** — Fallback strategies
+  - Retry with different model
+  - Reduce quality/duration
+  - Use cached result if available
+
+#### Frontend UI
+- [ ] **Job Status Polling** — every 5 sec (not 30 sec)
+- [ ] **Timeout Warning** — "Taking longer than expected..."
+- [ ] **Cancel Button** — user can abort
+- [ ] **Retry Button** — if failed
+- [ ] **Error Details** — show actual error message
+
+#### Tests
+- [ ] Timeout detection (5+ tests)
+- [ ] Retry logic (8+ tests)
+- [ ] Error recovery (5+ tests)
+- [ ] Database lock handling (3+ tests)
+
+### Files to Create/Update
+- [ ] `server/agents/jobMonitorAgent.ts` — Heartbeat monitor
+- [ ] `server/services/jobRecovery.ts` — Recovery logic
+- [ ] `server/routers/jobRecovery.ts` — tRPC procedures
+- [ ] `client/src/hooks/useJobPolling.ts` — Frontend polling
+- [ ] `client/src/components/JobStatusIndicator.tsx` — UI indicator
+- [ ] `drizzle/migrations/0016_job_recovery.sql` — DB schema
+
+### Priority
+**CRITICAL** — Implement before Phase 18 launch (users are experiencing this NOW)
