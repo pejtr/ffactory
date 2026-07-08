@@ -34,6 +34,7 @@ import { youtubeRouter } from "./routers/youtube";
 import { agentsRouter } from "./routers/agents";
 import { motionTransferRouter } from "./routers/motionTransfer";
 import { jobRecoveryRouter } from "./routers/jobRecovery";
+import { higgsFieldRouter } from "./routers/higgsfield";
 
 export const appRouter = router({
   system: systemRouter,
@@ -46,6 +47,7 @@ export const appRouter = router({
   agents: agentsRouter,
   motionTransfer: motionTransferRouter,
   jobRecovery: jobRecoveryRouter,
+  higgsfield: higgsFieldRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

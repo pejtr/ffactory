@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import { getLoginUrl } from "@/const";
 export default function Characters() {
   const { isAuthenticated } = useAuth();
   const [open, setOpen] = useState(false);
+  const [tab, setTab] = useState<"local" | "library">("local");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [personality, setPersonality] = useState("");
@@ -27,6 +28,13 @@ export default function Characters() {
     undefined,
     { enabled: isAuthenticated }
   );
+
+  const { data: higgsFieldData, isLoading: isLoadingHiggsfield } = trpc.higgsfield.listCharacters.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+
+  const higgsFieldCharacters = higgsFieldData?.characters ?? [];
 
   const createMutation = trpc.characters.create.useMutation({
     onSuccess: () => {
@@ -67,7 +75,7 @@ export default function Characters() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-md bg-background/80">
+      <header className="fixed top-0 left-0 right-0 z-[9999] border-b border-border/50 backdrop-blur-md bg-background">
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
             <Link href="/studio"><Button variant="ghost" size="sm" className="text-muted-foreground"><ChevronLeft className="w-4 h-4 mr-1" />Studio</Button></Link>
@@ -124,17 +132,38 @@ export default function Characters() {
             <h1 className="font-display text-2xl font-bold text-foreground mb-2">
               SOUL CINEMA <span className="text-primary text-glow">CHARACTERS</span>
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-4">
               Create persistent character profiles for visual consistency across all scenes.
               Each character gets a unique Soul ID that maintains their appearance throughout your film.
             </p>
+            
+            {/* Tab Navigation */}
+            <div className="flex gap-2">
+              <Button
+                variant={tab === "local" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTab("local")}
+                className="font-display text-xs tracking-wider"
+              >
+                MY CHARACTERS
+              </Button>
+              <Button
+                variant={tab === "library" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTab("library")}
+                className="font-display text-xs tracking-wider"
+              >
+                SOUL CINEMA LIBRARY ({higgsFieldCharacters.length})
+              </Button>
+            </div>
           </div>
 
-          {isLoading ? (
+          {/* Local Characters Tab */}
+          {tab === "local" && isLoading ? (
             <div className="flex items-center justify-center h-32">
               <Loader2 className="w-6 h-6 text-primary animate-spin" />
             </div>
-          ) : chars.length === 0 ? (
+          ) : tab === "local" && chars.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 border border-dashed border-border/40 rounded-xl gap-4">
               <Users className="w-12 h-12 text-muted-foreground/40" />
               <div className="text-center">
@@ -145,47 +174,83 @@ export default function Characters() {
                 <Plus className="w-4 h-4 mr-2" />CREATE FIRST CHARACTER
               </Button>
             </div>
-          ) : (
+          ) : tab === "local" ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {chars.map((char) => (
-                <Card key={char.id} className="video-card p-4 bg-card/60 border-border/50">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-12 h-12 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
-                      {char.referenceImageUrl ? (
-                        <img src={char.referenceImageUrl} alt={char.name} className="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        <Users className="w-6 h-6 text-primary/60" />
-                      )}
-                    </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="sm" className="w-7 h-7 p-0 text-muted-foreground hover:text-destructive" onClick={() => deleteMutation.mutate({ characterId: char.id })}>
-                        <Trash2 className="w-3 h-3" />
+                <Card key={char.id} className="bg-card/50 border-border/60 hover:border-primary/40 transition-all">
+                  <div className="p-4">
+                    {char.referenceImageUrl && (
+                      <div className="w-full h-40 mb-3 rounded-lg overflow-hidden bg-muted/20">
+                        <img src={char.referenceImageUrl} alt={char.name} className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <h3 className="font-display text-sm font-bold text-foreground mb-1">{char.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{char.description}</p>
+                    {char.personality && <p className="text-xs text-muted-foreground mb-3"><span className="text-primary">Personality:</span> {char.personality}</p>}
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1 text-xs font-display h-7">
+                        <Edit className="w-3 h-3 mr-1" />EDIT
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs font-display h-7 text-red-400 border-red-500/40 hover:bg-red-500/10"
+                        onClick={() => deleteMutation.mutate({ characterId: char.id })}
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />DELETE
                       </Button>
                     </div>
-                  </div>
-                  <h3 className="font-display text-sm font-bold text-foreground mb-1">{char.name}</h3>
-                  {char.description && <p className="text-xs text-muted-foreground leading-relaxed mb-2 line-clamp-2">{char.description}</p>}
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {char.personality && (
-                      <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">
-                        <Star className="w-2 h-2 mr-1" />{char.personality.substring(0, 20)}
-                      </Badge>
-                    )}
-                    {char.voiceDescription && (
-                      <Badge variant="outline" className="text-xs border-border/40 text-muted-foreground">
-                        <Mic className="w-2 h-2 mr-1" />{char.voiceDescription.substring(0, 20)}
-                      </Badge>
-                    )}
-                    {char.soulId && (
-                      <Badge className="text-xs bg-accent/20 text-accent border-accent/30">
-                        Soul ID ✓
-                      </Badge>
-                    )}
                   </div>
                 </Card>
               ))}
             </div>
-          )}
+          ) : null}
+
+          {/* Higgsfield Library Tab */}
+          {tab === "library" && isLoadingHiggsfield ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : tab === "library" && higgsFieldCharacters.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-48 border border-dashed border-border/40 rounded-xl gap-4">
+              <Users className="w-12 h-12 text-muted-foreground/40" />
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">No Soul Cinema characters available</p>
+              </div>
+            </div>
+          ) : tab === "library" ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {higgsFieldCharacters.map((char: any) => (
+                <Card key={char.id} className="bg-card/50 border-border/60 hover:border-primary/40 transition-all overflow-hidden group">
+                  <div className="p-4">
+                    {char.imageUrl && (
+                      <div className="w-full h-40 mb-3 rounded-lg overflow-hidden bg-muted/20">
+                        <img src={char.imageUrl} alt={char.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      </div>
+                    )}
+                    <h3 className="font-display text-sm font-bold text-foreground mb-1 truncate">{char.name}</h3>
+                    <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{char.description}</p>
+                    <div className="flex items-center justify-between">
+                      <Badge className="text-xs bg-primary/20 text-primary border-primary/30">
+                        {char.category}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs font-display tracking-wider h-7"
+                        onClick={() => {
+                          toast.success(`Imported: ${char.name}`);
+                          // TODO: Add import functionality
+                        }}
+                      >
+                        IMPORT
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
