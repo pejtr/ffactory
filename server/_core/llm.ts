@@ -265,8 +265,35 @@ const normalizeResponseFormat = ({
   };
 };
 
-export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
+// Rate limiting cache (in-memory, resets on server restart)
+const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
+
+const checkRateLimit = (userId: string, limit: number = 100, windowMs: number = 3600000): boolean => {
+  const now = Date.now();
+  const entry = rateLimitCache.get(userId);
+  
+  if (!entry || now > entry.resetAt) {
+    rateLimitCache.set(userId, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  
+  if (entry.count >= limit) {
+    return false;
+  }
+  
+  entry.count++;
+  return true;
+};
+
+export async function invokeLLM(params: InvokeParams, userId?: string): Promise<InvokeResult> {
   assertApiKey();
+
+  // Rate limiting check
+  if (userId && !checkRateLimit(userId)) {
+    throw new Error(
+      "Rate limit exceeded. Please try again later. (Max 100 requests per hour)"
+    );
+  }
 
   const {
     messages,
@@ -296,10 +323,10 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
+  payload.max_tokens = 32768;
   payload.thinking = {
-    "budget_tokens": 128
-  }
+    budget_tokens: 128
+  };
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -312,21 +339,41 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await fetch(resolveApiUrl(), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${ENV.forgeApiKey}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+    // Handle 412 Precondition Failed (usage exhausted)
+    if (response.status === 412) {
+      throw new Error(
+        "LLM service quota exhausted. Please try again later or contact support."
+      );
+    }
+
+    // Handle 429 Too Many Requests
+    if (response.status === 429) {
+      throw new Error(
+        "Too many requests to LLM service. Please wait a moment and try again."
+      );
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+      );
+    }
+
+    return (await response.json()) as InvokeResult;
+  } catch (error) {
+    // Log error for debugging
+    console.error("[LLM Error]", error);
+    throw error;
   }
-
-  return (await response.json()) as InvokeResult;
 }

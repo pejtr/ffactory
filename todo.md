@@ -563,3 +563,366 @@ Before each checkpoint:
 - `docs/ARCHITECTURE.md` — System architecture & design patterns
 - `docs/MATRIX_LAB.md` — MATRIX LAB framework specification
 - `CLAUDE_CODE_COORDINATION.md` — Claude Code development guidelines
+
+
+## Phase 17: SCAIL-2 GGUF Motion Transfer (NEW)
+**Duration:** 10–12 days  
+**Modules:** ComfyUI workflow, Wan 2.1 motion transfer, SAM3.1 masking, GGUF quantization
+
+### Overview
+SCAIL-2 GGUF Motion Transfer enables **character animation from driving videos** with:
+- ✅ Automatic subject masking (SAM3.1) — no manual rotoscoping
+- ✅ GGUF quantization — runs on consumer GPUs (8GB VRAM)
+- ✅ Chunked loop generation — unlimited video length (no 5s limit)
+- ✅ Multi-GPU offloading — faster processing
+- ✅ Seamless stitching — color-matched transitions
+
+### Implementation Tasks
+
+**Backend:**
+- [ ] ComfyUI workflow integration (SCAIL-2 nodes)
+- [ ] Wan 2.1 motion transfer model setup
+- [ ] SAM3.1 automatic masking integration
+- [ ] GGUF quantization wrapper (Q4_K_M format)
+- [ ] Chunked loop generator (81-frame + 76-frame windows)
+- [ ] Color matching algorithm for seamless stitching
+- [ ] Multi-GPU offloading support
+- [ ] tRPC procedures: `animateCharacter`, `transferMotion`, `generateChunkedVideo`
+- [ ] Queue management for long-form video generation
+- [ ] Error handling + fallback (if GPU memory insufficient)
+
+**Frontend:**
+- [ ] MotionTransferStudio.tsx page
+  - [ ] Upload reference image (character)
+  - [ ] Upload driving video (motion source)
+  - [ ] Preview first 5 seconds
+  - [ ] Generate full video button
+  - [ ] Progress tracking (chunked generation)
+  - [ ] Download MP4 button
+- [ ] Integration with Timeline Editor (post-processing)
+- [ ] MAGS MotionTransferAgent (auto-animate low-engagement videos)
+
+**Database:**
+- [ ] motion_transfer_projects table (reference_image, driving_video, output_video, status)
+- [ ] motion_transfer_settings table (gpu_config, chunk_size, color_matching_threshold)
+- [ ] Migration: 0015_motion_transfer_tables.sql
+
+**MAGS Integration:**
+- [ ] MotionTransferAgent — detects static videos, auto-animates with motion transfer
+- [ ] Rules: video_duration < 5s OR engagement_rate < 2% → animate with motion transfer
+- [ ] Decision: "Animate character with motion transfer from trending dance video"
+- [ ] Auto-execution: generate → upload → track performance
+
+**Tests:**
+- [ ] Unit tests for chunked loop generator (10+ tests)
+- [ ] Integration tests for SAM3.1 masking (5+ tests)
+- [ ] E2E tests for motion transfer pipeline (8+ tests)
+- [ ] Performance tests (GPU memory, generation time)
+
+**Files to Create:**
+- `server/integrations/scail2.ts` — SCAIL-2 ComfyUI wrapper
+- `server/integrations/wan21.ts` — Wan 2.1 motion transfer client
+- `server/integrations/sam31.ts` — SAM3.1 masking wrapper
+- `server/agents/motionTransferAgent.ts` — MAGS agent
+- `server/routers/motionTransfer.ts` — tRPC procedures
+- `client/src/pages/MotionTransferStudio.tsx` — React UI
+- `drizzle/migrations/0015_motion_transfer_tables.sql` — DB schema
+
+### Use Cases
+
+✅ **Virtual Influencers** — Animate AI-generated faces with real human motion  
+✅ **Dance Videos** — Map TikTok dances onto any character  
+✅ **Tutorial Videos** — Animate static diagrams with motion  
+✅ **Character Animation** — Rapid prototyping without manual frame-by-frame animation  
+✅ **Low-Engagement Rescue** — Auto-animate underperforming videos  
+
+### Cost Analysis
+
+| Operation | Cost | Frequency | Monthly |
+|---|---|---|---|
+| Wan 2.1 inference | $0.01/video | 10 videos/day | $3 |
+| SAM3.1 masking | $0 (local) | Included | $0 |
+| GPU compute (local) | $0 (amortized) | Included | $0 |
+| **TOTAL** | | | **$3/měsíc** |
+
+**vs. Traditional Animation:** $50–100/video = **97% savings**
+
+### Performance Targets
+
+- ✅ 10-min video generation: < 5 minutes (chunked)
+- ✅ GPU memory: < 8GB (GGUF quantization)
+- ✅ Seamless stitching: < 2 frame artifacts per transition
+- ✅ Color matching accuracy: > 95%
+
+### Integration with Existing System
+
+1. **Timeline Editor** — post-process animated videos (effects, color grading)
+2. **MAGS MotionTransferAgent** — autonomous animation of low-engagement videos
+3. **ContentCalendarAgent** — auto-queue motion transfer videos
+4. **Multi-platform** — distribute animated videos across YouTube, TikTok, Instagram
+5. **Analytics** — track engagement lift from motion transfer
+
+### ROI Projection
+
+**100 uživatelů, 3 motion transfer videí/měsíc:**
+
+| Metrika | Hodnota |
+|---|---|
+| Videí/měsíc | 300 |
+| Náklady | $9 |
+| Příjem (5× marže) | $45 |
+| Profit | **$36** |
+| **ROI** | **400%** |
+
+### Recommendation
+
+Implementuj jako **Phase 17** (po NotebookLM). Synergy:
+- ResearchAgent (NotebookLM) → generuje script
+- VideoAgent → detekuje underperforming videa
+- MotionTransferAgent → animuje je
+- ContentCalendarAgent → queue management
+- Multi-platform → distribuce
+
+**Výsledek: Autonomní animation factory pro nízké náklady.**
+
+
+---
+
+## Phase 18: Higgsfield Full Integration (NEW - PRIORITY A)
+**Duration:** 9 days (5 iterace)  
+**Modules:** Higgsfield MCP, generation history, advanced AI features
+
+### Overview
+**Higgsfield Integration** — Přinese plnou sílu Higgsfield do Video Factory:
+- ✅ Image generation (Soul 2.0, Nano Banana, Marketing Studio)
+- ✅ Video generation (Seedance 2.0, Kling 3.0, Personal Clipper)
+- ✅ 3D generation (image-to-3D, rigging, animation)
+- ✅ Audio/TTS (Seed Audio, ElevenLabs, voice cloning)
+- ✅ Advanced editing (upscaling, outpainting, background removal)
+- ✅ Generation history (stažená z Higgsfield)
+- ✅ Presets management
+- ✅ Marketing Studio integration
+- ✅ Higgsfield-style UI v Video Factory
+
+### Iterace
+
+#### Iterace 1: Higgsfield Sync & DB Schema (1 den)
+**Cíl:** Stáhni historii z Higgsfield, vytvoř DB tabulky
+
+- [ ] Stáhni historii generování z Higgsfield (show_generations + show_marketing_studio_generations)
+- [ ] Vytvoř DB tabulky:
+  - [ ] `higgsfield_generations` (id, userId, jobId, type, model, status, params, results, createdAt)
+  - [ ] `higgsfield_presets` (id, userId, name, model, params, favorite, createdAt)
+  - [ ] `higgsfield_assets` (id, userId, assetId, type, url, metadata, createdAt)
+  - [ ] `higgsfield_voice_library` (id, userId, voiceId, voiceName, voiceType, metadata)
+- [ ] Migrace: 0016_higgsfield_tables.sql
+- [ ] tRPC procedura: `higgsfield.syncHistory()` — stáhni a ulož historii
+
+#### Iterace 2: Core Generation API (2 dny)
+**Cíl:** Image + Video generation procedury
+
+- [ ] tRPC router: `server/routers/higgsfield.ts`
+- [ ] Procedury:
+  - [ ] `generateImage` — Soul 2.0, Nano Banana, Marketing Studio
+  - [ ] `generateVideo` — Seedance 2.0, Kling 3.0, Personal Clipper
+  - [ ] `getGenerationStatus` — polling
+  - [ ] `listGenerations` — historií s filtry
+  - [ ] `deleteGeneration` — smazání
+  - [ ] `favoriteGeneration` — oblíbené
+- [ ] Error handling + retry logic
+- [ ] Cost estimation
+- [ ] Tests: 15+ test cases
+
+#### Iterace 3: Advanced Features (2 dny)
+**Cíl:** 3D, Audio, Upscaling, Effects
+
+- [ ] Procedury:
+  - [ ] `generate3D` — image-to-3D, multi-image-to-3D
+  - [ ] `generateAudio` — TTS (Seed Audio, ElevenLabs)
+  - [ ] `cloneVoice` — voice cloning
+  - [ ] `upscaleImage` — image upscaling
+  - [ ] `upscaleVideo` — video upscaling
+  - [ ] `outpaintImage` — image extension
+  - [ ] `removeBackground` — background removal
+  - [ ] `analyzeVideo` — video analysis
+- [ ] Presets management:
+  - [ ] `listPresets` — filtrování dle modelu
+  - [ ] `savePreset` — uložení vlastního presetu
+  - [ ] `applyPreset` — aplikace presetu na generaci
+  - [ ] `deletePreset`
+- [ ] Tests: 20+ test cases
+
+#### Iterace 4: UI Integration (3 dny)
+**Cíl:** Higgsfield-style interface v Video Factory
+
+- [ ] Nové stránky:
+  - [ ] `/studio/generate-image` — Image generation UI
+  - [ ] `/studio/generate-video` — Video generation UI
+  - [ ] `/studio/generate-3d` — 3D generation UI
+  - [ ] `/studio/audio-studio` — Audio/TTS UI
+  - [ ] `/studio/generation-history` — Historií s filtry
+  - [ ] `/studio/presets` — Presets manager
+- [ ] Komponenty:
+  - [ ] `GenerationCard` — zobrazení generace
+  - [ ] `PresetSelector` — výběr presetu
+  - [ ] `ParameterPanel` — nastavení parametrů
+  - [ ] `GenerationGallery` — galerie s infinite scroll
+  - [ ] `ProgressIndicator` — progress tracking
+  - [ ] `CostEstimator` — odhad ceny
+- [ ] Navigace:
+  - [ ] Sidebar v Studio s generačními nástroji
+  - [ ] Quick access k posledním generacím
+  - [ ] Favorites management
+- [ ] Dark/Light theme support
+- [ ] Responsive design (mobile-first)
+
+#### Iterace 5: Testing & Polish (1 den)
+**Cíl:** Tests, error handling, GitHub push
+
+- [ ] Unit tests: 50+ test cases
+- [ ] Integration tests: 10+ scenarios
+- [ ] E2E tests: key workflows
+- [ ] Error handling:
+  - [ ] Rate limiting
+  - [ ] Timeout handling
+  - [ ] Fallback strategies
+  - [ ] User-friendly error messages
+- [ ] Performance:
+  - [ ] Caching (Redis)
+  - [ ] Pagination
+  - [ ] Lazy loading
+- [ ] Documentation:
+  - [ ] API docs
+  - [ ] UI guide
+  - [ ] Troubleshooting
+- [ ] GitHub push:
+  - [ ] Checkpoint
+  - [ ] Sync to main branch
+
+### Database Schema
+
+```sql
+-- Higgsfield generations
+CREATE TABLE higgsfield_generations (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  jobId VARCHAR(255) UNIQUE NOT NULL,
+  type ENUM('image', 'video', '3d', 'audio') NOT NULL,
+  model VARCHAR(128) NOT NULL,
+  status ENUM('pending', 'processing', 'completed', 'failed') DEFAULT 'pending',
+  params JSON,
+  results JSON,
+  costUsd FLOAT,
+  processingTimeSeconds INT,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Higgsfield presets
+CREATE TABLE higgsfield_presets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  model VARCHAR(128) NOT NULL,
+  params JSON NOT NULL,
+  favorite BOOLEAN DEFAULT FALSE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Higgsfield assets library
+CREATE TABLE higgsfield_assets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  assetId VARCHAR(255) UNIQUE,
+  type ENUM('image', 'video', '3d', 'audio', 'preset') NOT NULL,
+  url VARCHAR(512),
+  metadata JSON,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Voice library
+CREATE TABLE higgsfield_voice_library (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL,
+  voiceId VARCHAR(255) UNIQUE,
+  voiceName VARCHAR(255),
+  voiceType ENUM('preset', 'cloned', 'element') DEFAULT 'preset',
+  metadata JSON,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### tRPC Router Structure
+
+```typescript
+higgsfield: {
+  // Sync & History
+  syncHistory: () => Promise<{ synced: number }>
+  listGenerations: (filter) => Promise<Generation[]>
+  getGeneration: (jobId) => Promise<Generation>
+  deleteGeneration: (jobId) => Promise<void>
+  favoriteGeneration: (jobId, favorite) => Promise<void>
+  
+  // Image Generation
+  generateImage: (prompt, model, params) => Promise<{ jobId }>
+  
+  // Video Generation
+  generateVideo: (prompt, model, params) => Promise<{ jobId }>
+  
+  // 3D Generation
+  generate3D: (image, model, params) => Promise<{ jobId }>
+  
+  // Audio/TTS
+  generateAudio: (text, voice, params) => Promise<{ jobId }>
+  cloneVoice: (audioUrl) => Promise<{ voiceId }>
+  listVoices: () => Promise<Voice[]>
+  
+  // Advanced Features
+  upscaleImage: (imageUrl, scale) => Promise<{ jobId }>
+  upscaleVideo: (videoUrl, scale) => Promise<{ jobId }>
+  outpaintImage: (imageUrl, params) => Promise<{ jobId }>
+  removeBackground: (imageUrl) => Promise<{ jobId }>
+  analyzeVideo: (videoUrl, prompt) => Promise<{ analysis }>
+  
+  // Presets
+  listPresets: (model?) => Promise<Preset[]>
+  savePreset: (name, model, params) => Promise<Preset>
+  applyPreset: (presetId, overrides?) => Promise<{ jobId }>
+  deletePreset: (presetId) => Promise<void>
+  
+  // Status & Cost
+  getJobStatus: (jobId) => Promise<JobStatus>
+  estimateCost: (model, params) => Promise<{ costUsd }>
+}
+```
+
+### Use Cases
+
+✅ **Complete AI Studio** — Všechny AI generační nástroje na jednom místě  
+✅ **Workflow Integration** — Generuj → Edituj → Publikuj  
+✅ **History & Favorites** — Vrať se k oblíbeným generacím  
+✅ **Presets & Automation** — Ulož nastavení, opakuj generace  
+✅ **Multi-modal** — Image → Video → 3D → Audio  
+✅ **Cost Optimization** — Sleduj výdaje, optimalizuj model selection  
+
+### ROI & Metrics
+
+| Metrika | Hodnota |
+|---|---|
+| **Nové funkce** | 30+ procedur |
+| **Nové stránky** | 6 pages |
+| **Nové komponenty** | 8 components |
+| **Test coverage** | 80%+ |
+| **Implementační čas** | 9 dní |
+| **Komplexita** | Vysoká (MAGS-level) |
+
+### Doporučení
+
+Implementuj **sekvenciálně** (Iterace 1→2→3→4→5):
+1. Nejdřív DB + sync (foundation)
+2. Pak core generation (value)
+3. Pak advanced features (differentiation)
+4. Pak UI (experience)
+5. Pak testing + deployment
+
+**Alternativa:** Paralelní Iterace 2+3 (pokud máš kapacitu)

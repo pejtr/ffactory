@@ -666,3 +666,105 @@ export const renderingQueue = mysqlTable("rendering_queue", {
 });
 export type RenderingQueueItem = typeof renderingQueue.$inferSelect;
 export type InsertRenderingQueueItem = typeof renderingQueue.$inferInsert;
+
+// ─── Motion Transfer (Phase 17: SCAIL-2 GGUF) ──────────────────────────────────
+export const motionTransferProjects = mysqlTable("motion_transfer_projects", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id").notNull(),
+  videoProjectId: int("video_project_id"), // optional link to main video project
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  
+  // Input media
+  referenceImageUrl: text("reference_image_url").notNull(), // character/avatar image
+  drivingVideoUrl: text("driving_video_url").notNull(), // motion source video
+  
+  // Output
+  outputVideoUrl: text("output_video_url"),
+  previewUrl: text("preview_url"), // first 5 seconds
+  
+  // Processing
+  status: mysqlEnum("status", [
+    "draft",
+    "uploading",
+    "processing",
+    "completed",
+    "failed",
+    "cancelled"
+  ]).default("draft").notNull(),
+  
+  progress: int("progress").default(0).notNull(), // 0-100
+  currentPhase: varchar("current_phase", { length: 64 }), // masking, transfer, stitching, etc
+  
+  // Configuration
+  videoDuration: int("video_duration"), // seconds (calculated from driving video)
+  chunkSize: int("chunk_size").default(81).notNull(), // frames per chunk
+  colorMatchingThreshold: float("color_matching_threshold").default(0.95).notNull(),
+  gpuConfig: json("gpu_config"), // { multiGpu: boolean, offloadGpu: number }
+  
+  // Performance
+  estimatedCostUsd: float("estimated_cost_usd"),
+  actualCostUsd: float("actual_cost_usd"),
+  processingTimeSeconds: int("processing_time_seconds"),
+  
+  // Error handling
+  errorMessage: text("error_message"),
+  errorCode: varchar("error_code", { length: 64 }),
+  
+  // Metadata
+  metadata: json("metadata"), // { model_version, quality_score, seamless_score, etc }
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type MotionTransferProject = typeof motionTransferProjects.$inferSelect;
+export type InsertMotionTransferProject = typeof motionTransferProjects.$inferInsert;
+
+// Motion Transfer Settings (per-user or global)
+export const motionTransferSettings = mysqlTable("motion_transfer_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("user_id"),
+  
+  // GPU configuration
+  enableMultiGpu: boolean("enable_multi_gpu").default(false),
+  primaryGpuId: varchar("primary_gpu_id", { length: 64 }),
+  secondaryGpuId: varchar("secondary_gpu_id", { length: 64 }),
+  maxVramGb: int("max_vram_gb").default(8),
+  
+  // Processing preferences
+  defaultChunkSize: int("default_chunk_size").default(81),
+  defaultColorMatchingThreshold: float("default_color_matching_threshold").default(0.95),
+  
+  // Quality settings
+  outputResolution: varchar("output_resolution", { length: 32 }).default("1920x1080"),
+  outputFps: int("output_fps").default(30),
+  outputCodec: varchar("output_codec", { length: 32 }).default("h264"),
+  
+  // Masking (SAM3.1)
+  enableAutoMasking: boolean("enable_auto_masking").default(true),
+  maskingQuality: varchar("masking_quality", { length: 32 }).default("high"), // low, medium, high
+  
+  // Model version
+  wan21ModelVersion: varchar("wan21_model_version", { length: 64 }).default("v1.0"),
+  sam31ModelVersion: varchar("sam31_model_version", { length: 64 }).default("v1.0"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+});
+export type MotionTransferSettings = typeof motionTransferSettings.$inferSelect;
+export type InsertMotionTransferSettings = typeof motionTransferSettings.$inferInsert;
+
+// Motion Transfer Queue (for batch processing)
+export const motionTransferQueue = mysqlTable("motion_transfer_queue", {
+  id: int("id").autoincrement().primaryKey(),
+  projectId: int("project_id").notNull(),
+  userId: int("user_id").notNull(),
+  priority: int("priority").default(5).notNull(), // 1-10, higher = more urgent
+  status: mysqlEnum("status", ["pending", "processing", "completed", "failed"]).default("pending").notNull(),
+  workerId: varchar("worker_id", { length: 128 }),
+  queuedAt: timestamp("queued_at").defaultNow().notNull(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+});
+export type MotionTransferQueueItem = typeof motionTransferQueue.$inferSelect;
+export type InsertMotionTransferQueueItem = typeof motionTransferQueue.$inferInsert;

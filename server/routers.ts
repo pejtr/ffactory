@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -31,6 +32,7 @@ import { referralRouter } from "./routers/referral";
 import { referenceRecreationRouter } from "./routers/referenceRecreation";
 import { youtubeRouter } from "./routers/youtube";
 import { agentsRouter } from "./routers/agents";
+import { motionTransferRouter } from "./routers/motionTransfer";
 
 export const appRouter = router({
   system: systemRouter,
@@ -41,6 +43,7 @@ export const appRouter = router({
   refRecreation: referenceRecreationRouter,
   youtube: youtubeRouter,
   agents: agentsRouter,
+  motionTransfer: motionTransferRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
