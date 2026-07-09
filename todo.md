@@ -1335,3 +1335,48 @@ CREATE TABLE job_recovery_log (
 
 ### Priority
 **CRITICAL** — Implement before Phase 18 launch (users are experiencing this NOW)
+
+
+---
+
+## Higgsfield Prompt Generator Integration (NEW)
+**Duration:** 1–2 days  
+**Modules:** LLM-based prompt generation, theme system, 4-step wizard
+
+### Features
+- [ ] Random prompt generation (LLM-based)
+- [ ] Theme-based prompts (Sci-Fi, Drama, Fantasy, Thriller, Horror, Comedy)
+- [ ] 4-step wizard: (1) Nápad → (2) Styl → (3) Scénář → (4) Vytvořit
+- [ ] Textarea pro custom prompt
+- [ ] Theme cards s ikonami
+- [ ] "Pokračovat" button pro next step
+
+### Implementation
+- [ ] `server/routers/promptGenerator.ts` — tRPC procedures
+  - [ ] `generateRandomPrompt()` — random prompt via LLM
+  - [ ] `generateThemePrompt(theme)` — theme-based prompt
+  - [ ] `listThemes()` — vrátí dostupná témata
+- [ ] `client/src/pages/GenerationStudio.tsx` — 4-step UI
+- [ ] `client/src/components/PromptWizard.tsx` — reusable wizard
+- [ ] `client/src/components/ThemeCard.tsx` — theme selector
+- [ ] 5+ vitest testy
+
+### Themes
+- Sci-Fi (🚀) — Space, futuristic, tech
+- Drama (🎭) — Emotional, intense, human
+- Fantasy (✨) — Magic, epic, adventure
+- Thriller (⚡) — Action, suspense, danger
+- Horror (👻) — Dark, scary, mysterious
+- Comedy (😂) — Funny, lighthearted, witty
+
+### Integration
+- Integruj do GenerationStudio.tsx Step 1
+- Ulož prompt do state → pass to Step 2–4
+- Ulož vygenerovaný prompt do DB
+
+### Status
+- [ ] Backend procedures
+- [ ] Frontend wizard UI
+- [ ] Theme system
+- [ ] Tests
+- [ ] Integration with Phase 18 Iterace 2
