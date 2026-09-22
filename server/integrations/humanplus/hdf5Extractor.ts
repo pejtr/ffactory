@@ -58,9 +58,9 @@ async function validateAnnotationPath(
   return resolved;
 }
 
-function extractorScriptPath(): string {
+export function humanPlusExtractorScriptPath(): string {
   const currentFile = fileURLToPath(import.meta.url);
-  const projectRoot = path.resolve(path.dirname(currentFile), "../../../..");
+  const projectRoot = path.resolve(path.dirname(currentFile), "../../..");
   return path.join(projectRoot, "scripts", "humanplus_extract.py");
 }
 
@@ -70,7 +70,7 @@ export const runHumanPlusPythonExtractor: HumanPlusExtractorRunner = async ({
   frameIndex,
   pythonExecutable,
 }) => {
-  const script = extractorScriptPath();
+  const script = humanPlusExtractorScriptPath();
   const { stdout, stderr } = await execFileAsync(
     pythonExecutable,
     [

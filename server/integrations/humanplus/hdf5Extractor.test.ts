@@ -1,5 +1,9 @@
+import { existsSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { extractHumanPlusMotionPacket } from "./hdf5Extractor";
+import {
+  extractHumanPlusMotionPacket,
+  humanPlusExtractorScriptPath,
+} from "./hdf5Extractor";
 
 const rawFrame = {
   sessionId: "HP_S000001",
@@ -41,6 +45,12 @@ const rawFrame = {
 };
 
 describe("HumanPlus HDF5 extractor bridge", () => {
+  it("resolves the Python extractor inside the OMNIVIDEO project", () => {
+    const script = humanPlusExtractorScriptPath();
+    expect(script.replaceAll("\\", "/")).toMatch(/\/scripts\/humanplus_extract\.py$/);
+    expect(existsSync(script)).toBe(true);
+  });
+
   it("normalizes extractor JSON without invoking production generation", async () => {
     const runner = vi.fn(async () => rawFrame);
     const packet = await extractHumanPlusMotionPacket(
