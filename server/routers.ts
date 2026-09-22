@@ -35,6 +35,7 @@ import { agentsRouter } from "./routers/agents";
 import { motionTransferRouter } from "./routers/motionTransfer";
 import { jobRecoveryRouter } from "./routers/jobRecovery";
 import { higgsFieldRouter } from "./routers/higgsfield";
+import { humanPlusRouter } from "./routers/humanPlus";
 
 export const appRouter = router({
   system: systemRouter,
@@ -48,6 +49,7 @@ export const appRouter = router({
   motionTransfer: motionTransferRouter,
   jobRecovery: jobRecoveryRouter,
   higgsfield: higgsFieldRouter,
+  humanPlus: humanPlusRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
